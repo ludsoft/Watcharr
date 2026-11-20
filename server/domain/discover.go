@@ -29,6 +29,21 @@ type DiscoverRequest struct {
 	// Not every `Type` of discover will support all Filters (service funcs
 	// will error individually based on what they support).
 	Filter DiscoverFilter `form:"filter" binding:"validdiscoverfilter"`
+
+	// Optional filters, only supported for the popular filter of movies
+	// and shows (the service validates this).
+
+	// Released from this year (inclusive).
+	YearFrom int `form:"yearFrom" binding:"omitempty,min=1870,max=2200"`
+	// Released until this year (inclusive).
+	YearTo int `form:"yearTo" binding:"omitempty,min=1870,max=2200"`
+	// Released (in theatres) in this country (ISO 3166-1). Movies only.
+	Country string `form:"country" binding:"omitempty,iso3166_1_alpha2"`
+}
+
+// Are any of the optional filters set?
+func (r DiscoverRequest) HasFilters() bool {
+	return r.YearFrom != 0 || r.YearTo != 0 || r.Country != ""
 }
 
 // Extra data that we provide to the Discover service func.

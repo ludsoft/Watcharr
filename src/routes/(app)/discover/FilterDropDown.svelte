@@ -11,7 +11,8 @@
 	interface Props {
 		active: DiscoverFilter | undefined;
 		discoverType: SearchType | undefined;
-		onChange: () => void;
+		/** Called with the newly selected filter. */
+		onChange: (filter: DiscoverFilter) => void;
 	}
 
 	let { active = $bindable(), discoverType, onChange }: Props = $props();
@@ -81,7 +82,8 @@
 		{options}
 		isDropDownItem={true}
 		bind:active
-		{onChange}
+		onChange={() =>
+			onChange((active ?? DiscoverFilter.trending) as DiscoverFilter)}
 		disabled={onMultiDiscover}
 	/>
 </div>

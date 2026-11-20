@@ -953,6 +953,10 @@ type DiscoverOptions struct {
 	// Release types are listed on this page:
 	// https://developer.themoviedb.org/reference/movie-release-dates
 	WithReleaseType string
+	// Movies only: original (first, any country) release date greater/less
+	// than. Unlike ReleaseDateMin/Max, not affected by `region`.
+	PrimaryReleaseDateMin time.Time
+	PrimaryReleaseDateMax time.Time
 }
 
 //

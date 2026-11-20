@@ -488,6 +488,12 @@ export type DiscoverFilterOption = `${DiscoverFilter}`;
 export interface DiscoverRequest extends PaginationParams {
 	type?: SearchType;
 	filter?: DiscoverFilter;
+	/** Popular movies/shows only: released from this year (inclusive). */
+	yearFrom?: number;
+	/** Popular movies/shows only: released until this year (inclusive). */
+	yearTo?: number;
+	/** Popular movies only: released in theatres in this country (ISO 3166-1). */
+	country?: string;
 }
 
 export interface PersonDetailsResponse {

@@ -37,6 +37,9 @@ func (s *Service) Discover(
 	meta domain.DiscoverRequestMeta,
 ) (domain.DiscoverResponse, error) {
 	resp := domain.DiscoverResponse{}
+	if err := validateFilters(r); err != nil {
+		return resp, err
+	}
 
 	switch r.Type {
 	case domain.SearchTypeMulti:
@@ -87,7 +90,7 @@ func (s *Service) DiscoverMovie(
 	case domain.DiscoverFilterUpcoming:
 		err = s.discoverMovieUpcoming(meta, &resp)
 	case domain.DiscoverFilterPopular:
-		err = s.discoverMoviePopular(meta, &resp)
+		err = s.discoverMoviePopular(r, meta, &resp)
 	default:
 		slog.Error("DiscoverMovie: Unsupported filter.")
 		return resp, errors.New("unsupported filter")
@@ -108,7 +111,7 @@ func (s *Service) DiscoverTv(
 	case domain.DiscoverFilterUpcoming:
 		err = s.discoverTvUpcoming(meta, &resp)
 	case domain.DiscoverFilterPopular:
-		err = s.discoverTvPopular(meta, &resp)
+		err = s.discoverTvPopular(r, meta, &resp)
 	default:
 		slog.Error("DiscoverMovie: Unsupported filter.")
 		return resp, errors.New("unsupported filter")
@@ -238,13 +241,15 @@ func (s *Service) discoverMovieUpcoming(
 }
 
 func (s *Service) discoverMoviePopular(
+	r domain.DiscoverRequest,
 	meta domain.DiscoverRequestMeta,
 	resp *domain.DiscoverResponse,
 ) error {
+	opts, region := popularMovieOptions(r, meta.Region, time.Now())
 	tmdbRes, err := s.tmdb.DiscoverMovies(
-		tmdb.DiscoverOptions{},
+		opts,
 		meta.PageParams.Page,
-		meta.Region,
+		region,
 	)
 	if err != nil {
 		slog.Error("discoverMoviePopular: Failed to search tmdb!",
@@ -294,11 +299,12 @@ func (s *Service) discoverTvUpcoming(
 }
 
 func (s *Service) discoverTvPopular(
+	r domain.DiscoverRequest,
 	meta domain.DiscoverRequestMeta,
 	resp *domain.DiscoverResponse,
 ) error {
 	tmdbRes, err := s.tmdb.DiscoverShows(
-		tmdb.DiscoverOptions{},
+		popularShowOptions(r),
 		meta.PageParams.Page,
 		meta.Region,
 	)

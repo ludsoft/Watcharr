@@ -90,4 +90,12 @@ func (t *TMDB) applyDiscoverOptionsToMap(
 	if o.WithReleaseType != "" {
 		m[withReleaseTypeKey] = o.WithReleaseType
 	}
+	if forMovie {
+		if !o.PrimaryReleaseDateMin.IsZero() {
+			m["primary_release_date.gte"] = o.PrimaryReleaseDateMin.Format("2006-01-02")
+		}
+		if !o.PrimaryReleaseDateMax.IsZero() {
+			m["primary_release_date.lte"] = o.PrimaryReleaseDateMax.Format("2006-01-02")
+		}
+	}
 }
