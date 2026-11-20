@@ -10,7 +10,7 @@
 	import MonthlyBars from "@/lib/analytics/MonthlyBars.svelte";
 	import { formatMinutes, formatMonth, plural } from "@/lib/analytics/util";
 	import { req } from "@/lib/util/api";
-	import type { Analytics, AnalyticsPeriod } from "@/types";
+	import type { Analytics, AnalyticsCounts, AnalyticsPeriod } from "@/types";
 
 	const periods: { id: AnalyticsPeriod; label: string }[] = [
 		{ id: "current_month", label: "This month" },
@@ -24,6 +24,24 @@
 	let period: AnalyticsPeriod = $derived.by(() => {
 		const p = page.url.searchParams.get("period");
 		return periods.find((v) => v.id === p)?.id ?? defaultPeriod;
+	});
+
+	type MediaType = keyof AnalyticsCounts;
+	const mediaTypes: MediaType[] = ["movies", "episodes", "games"];
+
+	/**
+	 * Media types shown in the activity history, from the `types` url param
+	 * (eg: `types=movies,games`). Missing/invalid means all of them.
+	 */
+	let include: Record<MediaType, boolean> = $derived.by(() => {
+		const raw = (page.url.searchParams.get("types") ?? "").split(",");
+		const picked = mediaTypes.filter((t) => raw.includes(t));
+		const all = picked.length === 0;
+		return {
+			movies: all || picked.includes("movies"),
+			episodes: all || picked.includes("episodes"),
+			games: all || picked.includes("games"),
+		};
 	});
 
 	let data: Analytics | undefined = $state();
@@ -56,13 +74,33 @@
 		load(period);
 	});
 
-	function setPeriod(p: AnalyticsPeriod) {
-		if (p === period) return;
-		goto(resolve(`/analytics?period=${p}`), {
+	/**
+	 * Update the url with new filters. Replaces the current history entry, so
+	 * filter changes don't pile up in history, but going back to this page
+	 * restores them.
+	 */
+	function navigate(p: AnalyticsPeriod, inc: Record<MediaType, boolean>) {
+		const types = mediaTypes.filter((t) => inc[t]);
+		const typesParam =
+			types.length === mediaTypes.length ? "" : `&types=${types.join(",")}`;
+		goto(resolve(`/analytics?period=${p}${typesParam}`), {
 			replaceState: true,
 			keepFocus: true,
 			noScroll: true,
 		});
+	}
+
+	function setPeriod(p: AnalyticsPeriod) {
+		if (p === period) return;
+		navigate(p, include);
+	}
+
+	function toggleType(t: MediaType) {
+		// Always keep at least one type selected.
+		if (include[t] && mediaTypes.filter((m) => include[m]).length === 1) {
+			return;
+		}
+		navigate(period, { ...include, [t]: !include[t] });
 	}
 
 	let monthly = $derived(data?.months ?? []);
@@ -164,7 +202,13 @@
 						Each cell is one day: films, episodes and games finished. Stronger
 						color means more activity.
 					</p>
-					<ActivityHeatmap start={data.start} end={data.end} days={data.days} />
+					<ActivityHeatmap
+						start={data.start}
+						end={data.end}
+						days={data.days}
+						{include}
+						onToggle={toggleType}
+					/>
 				</section>
 
 				<section>

@@ -13,9 +13,13 @@
 		/** Last day of the period (YYYY-MM-DD). */
 		end: string;
 		days: AnalyticsDay[];
+		/** Which media types are shown (owned by the page, kept in the url). */
+		include: Record<keyof AnalyticsCounts, boolean>;
+		/** Called when a media type filter is clicked. */
+		onToggle: (key: keyof AnalyticsCounts) => void;
 	}
 
-	let { start, end, days }: Props = $props();
+	let { start, end, days, include, onToggle }: Props = $props();
 
 	const CELL = 12;
 	const GAP = 3;
@@ -49,20 +53,6 @@
 		{ key: "episodes", label: "TV episodes" },
 		{ key: "games", label: "Games" },
 	];
-	let include: Record<keyof AnalyticsCounts, boolean> = $state({
-		movies: true,
-		episodes: true,
-		games: true,
-	});
-
-	function toggle(key: keyof AnalyticsCounts) {
-		// Always keep at least one type selected.
-		if (include[key] && filters.filter((f) => include[f.key]).length === 1) {
-			return;
-		}
-		include[key] = !include[key];
-	}
-
 	/** Counts with the excluded media types zeroed. */
 	const filtered = (c: AnalyticsCounts): AnalyticsCounts => ({
 		movies: include.movies ? c.movies : 0,
@@ -143,7 +133,7 @@
 				class="filter"
 				class:active={include[f.key]}
 				aria-pressed={include[f.key]}
-				onclick={() => toggle(f.key)}
+				onclick={() => onToggle(f.key)}
 			>
 				{f.label}
 			</button>
