@@ -1,25 +1,37 @@
-# This workflow releases a Watcharr image. Version based on pushed git tag.
+# This workflow builds a Watcharr image and pushes it to this fork's
+# GitHub Container Registry: ghcr.io/ludsoft/watcharr
+#
+# Triggers:
+#   - Push to `dev` or `oidc-auth`  -> tags `<branch>` and `sha-<short sha>`
+#                                      (`dev` also gets `latest`).
+#   - Push of a version tag         -> tags `vX.Y.Z` (and `vX.Y`, `beta`).
+#   - Manual run (Actions tab)      -> same as a branch push, for any branch.
 #
 # Multi arch support doc/guide:
 # https://docs.docker.com/build/ci/github-actions/multi-platform/
-# Workflow filter pattern cheat sheet:
-# https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#filter-pattern-cheat-sheet
-#
-# **NOTE:** Don't risk testing changes to this workflow in this repo directly!
-#           USE A TEST REPO!
 
 name: Release Watcharr Image
 
 on:
   push:
+    branches:
+      - dev
+      - oidc-auth
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'              # stable,  ex: v1.2.3
       - 'v[0-9]+.[0-9]+.[0-9]+-beta.[0-9]+'  # beta,    ex: v1.2.3-beta.1
+  workflow_dispatch:
 
 env:
-  image: sbondco/watcharr
-  is_stable: ${{ !contains(github.ref_name, '-') }}
-  is_prerelease: ${{ contains(github.ref_name, '-') }}
+  # GHCR image names must be lowercase.
+  image: ghcr.io/ludsoft/watcharr
+  is_stable: ${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') }}
+  is_prerelease: ${{ startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-') }}
+
+# Only build the latest push of a ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   release-images:
@@ -46,26 +58,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v4.4.0
-        with:
-          username: sbondco
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v6.2.0
         with:
-          images: |
-            ${{ env.image }}
-            ghcr.io/${{ env.image }}
+          images: ${{ env.image }}
           flavor: |
             latest=false
           tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{raw}}
             type=semver,pattern=v{{major}}.{{minor}},enable=${{ env.is_stable }}
-            type=raw,value=latest,enable=${{ env.is_stable }}
-            type=raw,value=beta,enable=${{ env.is_prerelease && contains(github.ref_name, '-beta') }}
+            type=raw,value=beta,enable=${{ env.is_prerelease == 'true' && contains(github.ref_name, '-beta') }}
 
       - name: Tags decided
         run: echo "${{ steps.meta.outputs.tags }}"
@@ -77,9 +83,5 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: |
-            ${{ steps.meta.outputs.tags }}
-            ghcr.io/${{ steps.meta.outputs.tags }}
-          labels: |
-            ${{ steps.meta.outputs.labels }}
-            ghcr.io/${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
