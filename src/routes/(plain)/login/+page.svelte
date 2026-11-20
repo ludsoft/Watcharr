@@ -2,7 +2,11 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import Icon from "@/lib/Icon.svelte";
-	import { type AuthResponse, type AvailableAuthProviders } from "@/types";
+	import {
+		type AuthResponse,
+		type AvailableAuthProviders,
+		type OIDCStartResponse,
+	} from "@/types";
 	import { noAuthReq } from "@/lib/util/api";
 	import { onMount } from "svelte";
 	import { notify, unNotify } from "@/lib/util/notify";
@@ -14,6 +18,8 @@
 	let availableProviders: string[] = $state([]);
 	let apHeader = $state(false);
 	let apPlex = $state(false);
+	let apOIDC = $state(false);
+	let oidcButtonName = $state("Single Sign-On");
 	let signupEnabled = $state(true);
 	let useEmby = $state(false);
 	let noAuto = $state(false);
@@ -63,6 +69,10 @@
 		availableProviders = r.available;
 		apHeader = availableProviders?.includes("header");
 		apPlex = availableProviders?.includes("plex");
+		apOIDC = availableProviders?.includes("oidc");
+		if (r.oidcButtonName) {
+			oidcButtonName = r.oidcButtonName;
+		}
 		signupEnabled = r.signupEnabled;
 		useEmby = r.useEmby;
 		if (r.headerAuthAutoLogin && !noAuto) {
@@ -160,6 +170,28 @@
 		}
 	}
 
+	/**
+	 * Start OIDC login. Gets the providers auth url from the server
+	 * and sends the user there, they will be sent back to our
+	 * `/oidc_callback` page to finish logging in.
+	 */
+	async function oidcLogin() {
+		const nid = notify({ text: "Redirecting", type: "loading" });
+		try {
+			const resp = await noAuthReq.post<OIDCStartResponse>("/auth/oidc/start", {
+				redirectUri: `${location.origin}${resolve("/oidc_callback")}`,
+			});
+			if (!resp?.url) {
+				throw new Error("no url returned");
+			}
+			window.location.href = resp.url;
+		} catch (err) {
+			console.error("oidcLogin: failed!", err);
+			error = ReqerError.getMsg(err, "Single Sign-On login failed");
+			unNotify(nid);
+		}
+	}
+
 	function proxyLogin(auto = false) {
 		const nid = notify({ text: "Logging in", type: "loading" });
 		noAuthReq
@@ -228,7 +260,7 @@
 						{/if}
 					{/if}
 				</div>
-				{#if apHeader || apPlex}
+				{#if apHeader || apPlex || apOIDC}
 					<p style="font-weight: bold; font-size: 14px;">or</p>
 					{#if apHeader}
 						<div class="login-btns">
@@ -241,6 +273,20 @@
 								}}
 							>
 								<Icon i="lock-closed" wh={18} />Continue with Single Sign-On
+							</button>
+						</div>
+					{/if}
+					{#if apOIDC}
+						<div class="login-btns">
+							<button
+								type="button"
+								name="oidc"
+								class="oidc other"
+								onclick={() => {
+									oidcLogin();
+								}}
+							>
+								<Icon i="lock-closed" wh={18} />Continue with {oidcButtonName}
 							</button>
 						</div>
 					{/if}

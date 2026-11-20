@@ -17,6 +17,11 @@ import (
 // Plex:
 //   - AuthToken  : Used for requests against plex.tv
 //   - AuthToken2 : Used for requests against home plex server.
+//
+// OIDC:
+//   - ClientID   : `<issuer>|<sub>` of the user at the OIDC provider.
+//   - AuthToken  : Unused.
+//   - AuthToken2 : Unused.
 type UserServices struct {
 	dbmodel.GormModelNoDel
 	// Service/integration name
@@ -38,4 +43,5 @@ type UserServiceName string
 const (
 	UserServiceNameJellyfin UserServiceName = "jellyfin"
 	UserServiceNamePlex     UserServiceName = "plex"
+	UserServiceNameOIDC     UserServiceName = "oidc"
 )

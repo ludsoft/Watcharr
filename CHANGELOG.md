@@ -2,6 +2,10 @@
 
 These changes are awaiting release:
 
+## Added
+
+- Auth: OpenID Connect (OIDC) login support. Configure your provider under `OIDC` in `watcharr.json` ([docs](https://watcharr.app/docs/server_config/oidc-auth)).
+
 ## Fixed
 
 - HorizontalList: Align items to left instead of adding space between. Ex: Fixes awkward space between when there are only 2 cast members. (thanks to [@Kiddo4993] for patching!)

@@ -71,6 +71,7 @@ type AvailableAuthProvidersResponse struct {
 	IsInSetup              bool     `json:"isInSetup"`
 	UseEmby                bool     `json:"useEmby"`
 	HeaderAuthAutoLogin    bool     `json:"headerAuthAutoLogin"`
+	OIDCButtonName         string   `json:"oidcButtonName,omitempty"`
 }
 
 type PlexProvider interface {

@@ -19,7 +19,7 @@
 	<Icon i="jellyfin" wh={20} />
 {:else if type == UserType.Plex}
 	<Icon i="plex" wh={20} />
-{:else if type == UserType.Proxy}
+{:else if type == UserType.Proxy || type == UserType.OIDC}
 	<Icon i="lock-closed" wh={20} />
 {:else}
 	<!-- Unknown type -->

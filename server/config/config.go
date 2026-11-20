@@ -42,6 +42,30 @@ type TrustedHeaderAuthSetting struct {
 	LogoutUrl string `json:"logoutUrl"`
 }
 
+// OpenID Connect authentication configuration.
+type OIDCSetting struct {
+	// Required: Should OIDC auth be enabled?
+	// To be actually enabled, Issuer and ClientID must also be set.
+	Enabled bool `json:"enabled"`
+	// Required: Issuer URL of the OIDC provider (used for discovery
+	// via `<issuer>/.well-known/openid-configuration`).
+	Issuer string `json:"issuer"`
+	// Required: Client ID registered with the provider.
+	ClientID string `json:"clientId"`
+	// Client secret registered with the provider.
+	// Can be left empty for public clients (PKCE is always used).
+	ClientSecret string `json:"clientSecret,omitempty"`
+	// Optional: Scopes to request. Defaults to openid, profile, email.
+	// `openid` is always added if missing.
+	Scopes []string `json:"scopes,omitempty"`
+	// Optional: Claim to use as the Watcharr username.
+	// Defaults to `preferred_username`, falling back to
+	// `name`, `email`, then `sub`.
+	UsernameClaim string `json:"usernameClaim,omitempty"`
+	// Optional: Name of the provider shown on the login button.
+	ButtonName string `json:"buttonName,omitempty"`
+}
+
 type ServerConfig struct {
 	// Used to sign JWT tokens. Make sure to make
 	// it strong, just like a very long, complicated password.
@@ -86,6 +110,9 @@ type ServerConfig struct {
 	// Optional: Trusted header authentication configuration.
 	// VERY DANGEROUS if access is not controlled correctly!
 	HEADER_AUTH TrustedHeaderAuthSetting `json:",omitempty"`
+
+	// Optional: OpenID Connect authentication configuration.
+	OIDC OIDCSetting `json:",omitzero"`
 
 	SONARR []cfgmodel.SonarrSettings `json:",omitempty"`
 	RADARR []cfgmodel.RadarrSettings `json:",omitempty"`

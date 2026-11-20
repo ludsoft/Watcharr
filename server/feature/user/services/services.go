@@ -24,7 +24,7 @@ func (s *Service) GetAll(userID uint) ([]entity.UserServices, error) {
 	us := []entity.UserServices{}
 	err := s.db.
 		Model(&entity.UserServices{}).
-		Where("user_id = ?", userID).
+		Where("user_id = ? AND name != ?", userID, entity.UserServiceNameOIDC).
 		Find(&us).
 		Error
 	if err != nil {
