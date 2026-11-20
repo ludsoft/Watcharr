@@ -1,6 +1,7 @@
 <!--
 	Single series column chart, one column per month.
-	Long ranges scroll horizontally (starting at the most recent month).
+	Always fits the available width (no scrolling), so with long periods
+	columns get thin and axis labels are thinned out to never overlap.
 -->
 <script lang="ts">
 	import { formatMonth, monthAbbr, plural } from "./util";
@@ -22,19 +23,25 @@
 	const PLOT_H = 140;
 	const BOTTOM = 34;
 	const HEIGHT = TOP + PLOT_H + BOTTOM;
-	const MIN_SLOT = 28;
 	const MAX_BAR = 24;
+	/** Min px between the starts of two month labels ("Sep"). */
+	const MONTH_LABEL_SPACE = 30;
+	/** Min px between the starts of two year labels ("2026"). */
+	const YEAR_LABEL_SPACE = 40;
+	/** Tooltip half width used to keep it inside the chart. */
+	const TIP_HALF = 55;
 
-	let clientWidth = $state(600);
+	let plotW = $state(600);
 	let hovered: number | undefined = $state();
 
 	let n = $derived(months.length);
 	let max = $derived(months.reduce((m, v) => Math.max(m, v.value), 0));
 	let maxIdx = $derived(months.findIndex((m) => m.value === max));
-	// clientWidth is of the scroll area, which excludes the pinned y axis.
-	let plotW = $derived(Math.max(clientWidth, n * MIN_SLOT));
 	let slot = $derived(plotW / Math.max(n, 1));
-	let barW = $derived(Math.min(MAX_BAR, slot * 0.65));
+	// Keep a gap between columns, even when they get very thin.
+	let barW = $derived(
+		Math.max(1, Math.min(MAX_BAR, slot * 0.65, slot - (slot > 4 ? 2 : 1))),
+	);
 
 	/** Clean integer ticks from 0 to a nice max. */
 	let ticks = $derived.by(() => {
@@ -51,8 +58,61 @@
 	let yMax = $derived(ticks[ticks.length - 1] || 1);
 
 	const y = (v: number) => TOP + PLOT_H - (v / yMax) * PLOT_H;
+	const monthNum = (i: number) => Number(months[i].month.split("-")[1]);
+	const yearOf = (i: number) => Number(months[i].month.split("-")[0]);
 
-	/** Column path: 4px rounded top, square at the baseline. */
+	interface XLabel {
+		i: number;
+		month?: string;
+		year?: string;
+	}
+
+	/**
+	 * Which x labels to draw, picked so they fit the available width.
+	 * Short periods label months (with the year under January and the first
+	 * column), long periods only label years.
+	 */
+	let labels: XLabel[] = $derived.by(() => {
+		const out: XLabel[] = [];
+		const monthsEvery = [1, 2, 3, 6].find((m) => m * slot >= MONTH_LABEL_SPACE);
+		if (monthsEvery) {
+			for (let i = 0; i < n; i++) {
+				const mo = monthNum(i);
+				const showMonth = (mo - 1) % monthsEvery === 0 || i === 0;
+				const showYear = mo === 1 || i === 0;
+				if (showMonth || showYear) {
+					out.push({
+						i,
+						month: showMonth ? monthAbbr[mo - 1] : undefined,
+						year: showYear ? String(yearOf(i)) : undefined,
+					});
+				}
+			}
+			// Don't let the first column's labels collide with the next ones.
+			const nextYear = out.find((l, idx) => idx > 0 && l.year);
+			if (nextYear && nextYear.i * slot < YEAR_LABEL_SPACE) {
+				out[0].year = undefined;
+			}
+			const nextMonth = out.find((l, idx) => idx > 0 && l.month);
+			if (nextMonth && nextMonth.i * slot < MONTH_LABEL_SPACE) {
+				out[0].month = undefined;
+			}
+			return out;
+		}
+		// Years only, every `k` years so they don't overlap.
+		const k =
+			[1, 2, 5, 10, 20, 50].find((k) => k * 12 * slot >= YEAR_LABEL_SPACE) ??
+			100;
+		for (let i = 0; i < n; i++) {
+			if (monthNum(i) === 1 && yearOf(i) % k === 0) {
+				out.push({ i, year: String(yearOf(i)) });
+			}
+		}
+		return out;
+	});
+	let anyMonthLabel = $derived(labels.some((l) => l.month));
+
+	/** Column path: up to 4px rounded top, square at the baseline. */
 	function barPath(x: number, v: number) {
 		const top = y(v);
 		const h = TOP + PLOT_H - top;
@@ -60,20 +120,15 @@
 		return `M${x},${top + h} V${top + r} Q${x},${top} ${x + r},${top} H${x + barW - r} Q${x + barW},${top} ${x + barW},${top + r} V${top + h} Z`;
 	}
 
-	/** Which months get an x label, depends on how many there are. */
-	function showMonthLabel(i: number) {
-		if (n <= 12) return true;
-		const mo = Number(months[i].month.split("-")[1]);
-		if (n <= 24) return mo % 3 === 1;
-		return mo === 1;
-	}
+	const barX = (i: number) => i * slot + (slot - barW) / 2;
+	const clampX = (x: number, pad: number) =>
+		Math.min(Math.max(x, pad), Math.max(pad, plotW - pad));
 
-	function showYearLabel(i: number) {
-		return i === 0 || months[i].month.endsWith("-01");
-	}
-
-	function scrollToEnd(node: HTMLElement) {
-		node.scrollLeft = node.scrollWidth;
+	/** The pointer selects the month column it is in (thin bars are hard to hit). */
+	function onPointerMove(e: PointerEvent) {
+		const rect = (e.currentTarget as SVGRectElement).getBoundingClientRect();
+		const i = Math.floor((e.clientX - rect.left) / slot);
+		hovered = i >= 0 && i < n ? i : undefined;
 	}
 </script>
 
@@ -83,7 +138,6 @@
 		<p class="empty">Nothing in this period.</p>
 	{:else}
 		<div class="chart">
-			<!-- Y axis is outside the scroll area, so it stays visible when scrolling. -->
 			<svg class="y-axis" width={LEFT} height={HEIGHT} aria-hidden="true">
 				{#each ticks as t (t)}
 					<text class="axis tick" x={LEFT - 6} y={y(t) + 4}
@@ -91,80 +145,72 @@
 					>
 				{/each}
 			</svg>
-			<div class="scroll" bind:clientWidth use:scrollToEnd>
-				<div class="inner" style:width="{plotW}px">
-					<svg
-						width={plotW}
-						height={HEIGHT}
-						role="img"
-						aria-label="{title} per month, up to {plural(
-							max,
-							unit[0],
-							unit[1],
-						)}"
-					>
-						{#each ticks as t (t)}
-							<line class="grid" x1={0} x2={plotW} y1={y(t)} y2={y(t)} />
-						{/each}
-						{#each months as m, i (m.month)}
-							{@const x = i * slot + (slot - barW) / 2}
-							{#if m.value > 0}
-								<path
-									d={barPath(x, m.value)}
-									fill={color}
-									class:dim={hovered !== undefined && hovered !== i}
-								/>
-							{/if}
-							{#if i === maxIdx}
-								<text class="value" x={x + barW / 2} y={y(m.value) - 5}>
-									{m.value.toLocaleString()}
-								</text>
-							{/if}
-							{#if showMonthLabel(i)}
-								<text
-									class="axis"
-									x={x + barW / 2}
-									y={TOP + PLOT_H + 15}
-									text-anchor="middle"
-								>
-									{monthAbbr[Number(m.month.split("-")[1]) - 1]}
-								</text>
-							{/if}
-							{#if showYearLabel(i)}
-								<text
-									class="axis year"
-									x={x + barW / 2}
-									y={TOP + PLOT_H + 29}
-									text-anchor="middle"
-								>
-									{m.month.split("-")[0]}
-								</text>
-							{/if}
-							<!-- Hit target: the whole column slot, bigger than the bar. -->
-							<rect
-								class="hit"
-								x={i * slot}
-								y={TOP}
-								width={slot}
-								height={PLOT_H}
-								role="presentation"
-								onpointerenter={() => (hovered = i)}
-								onpointerleave={() => (hovered = undefined)}
+			<div class="plot" bind:clientWidth={plotW}>
+				<svg
+					width={plotW}
+					height={HEIGHT}
+					role="img"
+					aria-label="{title} per month, up to {plural(max, unit[0], unit[1])}"
+				>
+					{#each ticks as t (t)}
+						<line class="grid" x1={0} x2={plotW} y1={y(t)} y2={y(t)} />
+					{/each}
+					{#each months as m, i (m.month)}
+						{#if m.value > 0}
+							<path
+								d={barPath(barX(i), m.value)}
+								fill={color}
+								class:dim={hovered !== undefined && hovered !== i}
 							/>
-						{/each}
-					</svg>
-					{#if hovered !== undefined}
-						{@const m = months[hovered]}
-						<div
-							class="tip"
-							style:left="{hovered * slot + slot / 2}px"
-							style:top="{Math.min(y(m.value), TOP + PLOT_H - 10) - 8}px"
+						{/if}
+					{/each}
+					{#if maxIdx >= 0}
+						<text
+							class="value"
+							x={clampX(barX(maxIdx) + barW / 2, 10)}
+							y={y(max) - 5}
 						>
-							<strong>{plural(m.value, unit[0], unit[1])}</strong>
-							<span>{formatMonth(m.month)}</span>
-						</div>
+							{max.toLocaleString()}
+						</text>
 					{/if}
-				</div>
+					{#each labels as l (l.i)}
+						{@const x = clampX(barX(l.i) + barW / 2, 12)}
+						{#if l.month}
+							<text class="axis" {x} y={TOP + PLOT_H + 15}>{l.month}</text>
+						{/if}
+						{#if l.year}
+							<text
+								class="axis year"
+								{x}
+								y={TOP + PLOT_H + (anyMonthLabel ? 29 : 15)}
+							>
+								{l.year}
+							</text>
+						{/if}
+					{/each}
+					<!-- One hit area for the whole plot, mapped to the column under the pointer. -->
+					<rect
+						class="hit"
+						x={0}
+						y={TOP}
+						width={plotW}
+						height={PLOT_H}
+						role="presentation"
+						onpointermove={onPointerMove}
+						onpointerleave={() => (hovered = undefined)}
+					/>
+				</svg>
+				{#if hovered !== undefined}
+					{@const m = months[hovered]}
+					<div
+						class="tip"
+						style:left="{clampX(hovered * slot + slot / 2, TIP_HALF)}px"
+						style:top="{Math.min(y(m.value), TOP + PLOT_H - 10) - 8}px"
+					>
+						<strong>{plural(m.value, unit[0], unit[1])}</strong>
+						<span>{formatMonth(m.month)}</span>
+					</div>
+				{/if}
 			</div>
 		</div>
 	{/if}
@@ -198,21 +244,15 @@
 		flex-shrink: 0;
 	}
 
-	.scroll {
+	.plot {
+		position: relative;
 		flex: 1;
 		min-width: 0;
-		overflow-x: auto;
-		/* Room for the tooltip above the tallest bar. */
-		padding-top: 40px;
-		margin-top: -40px;
-	}
-
-	.inner {
-		position: relative;
 	}
 
 	svg {
 		display: block;
+		overflow: visible;
 	}
 
 	.grid {
@@ -225,6 +265,7 @@
 		font-size: 11px;
 		fill: $text-color-accent;
 		font-variant-numeric: tabular-nums;
+		text-anchor: middle;
 		user-select: none;
 
 		&.tick {

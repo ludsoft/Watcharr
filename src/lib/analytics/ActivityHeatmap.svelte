@@ -1,7 +1,7 @@
 <!--
 	Activity heatmap: one cell per day, one row per year (newest first).
-	Columns are weeks (Monday first). Cell color = total watch events that day,
-	on 4 levels scaled to the busiest day of the period.
+	Columns are weeks (Monday first). Cell color = total watch events that day
+	of the selected media types, on 4 quartile based levels.
 -->
 <script lang="ts">
 	import type { AnalyticsCounts, AnalyticsDay } from "@/types";
@@ -43,6 +43,32 @@
 
 	let hovered: (Cell & { year: number }) | undefined = $state();
 
+	/** Media type filters. */
+	const filters: { key: keyof AnalyticsCounts; label: string }[] = [
+		{ key: "movies", label: "Films" },
+		{ key: "episodes", label: "TV episodes" },
+		{ key: "games", label: "Games" },
+	];
+	let include: Record<keyof AnalyticsCounts, boolean> = $state({
+		movies: true,
+		episodes: true,
+		games: true,
+	});
+
+	function toggle(key: keyof AnalyticsCounts) {
+		// Always keep at least one type selected.
+		if (include[key] && filters.filter((f) => include[f.key]).length === 1) {
+			return;
+		}
+		include[key] = !include[key];
+	}
+
+	/** Counts with the excluded media types zeroed. */
+	const filtered = (c: AnalyticsCounts): AnalyticsCounts => ({
+		movies: include.movies ? c.movies : 0,
+		episodes: include.episodes ? c.episodes : 0,
+		games: include.games ? c.games : 0,
+	});
 	const total = (c: AnalyticsCounts) => c.movies + c.episodes + c.games;
 
 	let byDate = $derived(new Map(days.map((d) => [d.date, d])));
@@ -53,7 +79,7 @@
 	 */
 	let thresholds = $derived.by(() => {
 		const totals = days
-			.map(total)
+			.map((d) => total(filtered(d)))
 			.filter((t) => t > 0)
 			.sort((a, b) => a - b);
 		const q = (p: number) => totals[Math.floor(p * (totals.length - 1))] ?? 0;
@@ -80,11 +106,9 @@
 				width: LEFT + y.weeks * STEP,
 				months,
 				cells: y.days.map((d) => {
-					const counts = byDate.get(d.date) ?? {
-						movies: 0,
-						episodes: 0,
-						games: 0,
-					};
+					const counts = filtered(
+						byDate.get(d.date) ?? { movies: 0, episodes: 0, games: 0 },
+					);
 					return {
 						date: d.date,
 						x: LEFT + d.col * STEP,
@@ -113,6 +137,18 @@
 </script>
 
 <div class="heatmap">
+	<div class="filters" role="group" aria-label="Media types shown">
+		{#each filters as f (f.key)}
+			<button
+				class="filter"
+				class:active={include[f.key]}
+				aria-pressed={include[f.key]}
+				onclick={() => toggle(f.key)}
+			>
+				{f.label}
+			</button>
+		{/each}
+	</div>
 	{#each years as row (row.year)}
 		{#if years.length > 1}
 			<h4 class="norm">{row.year}</h4>
@@ -178,6 +214,31 @@
 		display: flex;
 		flex-flow: column;
 		gap: 6px;
+	}
+
+	.filters {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		margin-bottom: 4px;
+
+		.filter {
+			width: auto;
+			padding: 4px 12px;
+			font-size: 13px;
+			border-radius: 999px;
+
+			&:not(.active) {
+				background-color: transparent;
+				color: $text-color-accent;
+				border: 1px solid $bg-color-accent;
+				text-decoration: line-through;
+
+				&:hover {
+					background-color: $accent-color;
+				}
+			}
+		}
 	}
 
 	h4 {
