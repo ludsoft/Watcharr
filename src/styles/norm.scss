@@ -13,6 +13,17 @@
 	--placeholder-color: #8e8e8e;
 	--poster-rating-color: gold;
 	--img-blend-multiply-bg-col: rgba(0, 0, 0, 0.85);
+	// Data viz colors (validated for contrast/CVD against the bg-color).
+	// Heatmap levels (less -> more).
+	--viz-heat-1: #86b6ef;
+	--viz-heat-2: #5598e7;
+	--viz-heat-3: #256abf;
+	--viz-heat-4: #104281;
+	// Series colors (films, episodes, games).
+	--viz-series-1: #2a78d6;
+	--viz-series-2: #eb6834;
+	--viz-series-3: #1baf7a;
+	--viz-grid: rgba(0, 0, 0, 0.1);
 
 	color-scheme: light;
 }
@@ -29,6 +40,15 @@
 	--placeholder-color: #8e8e8e;
 	--poster-rating-color: black;
 	--img-blend-multiply-bg-col: rgba(255, 255, 255, 0.03);
+	// Dark mode: brighter means more.
+	--viz-heat-1: #184f95;
+	--viz-heat-2: #256abf;
+	--viz-heat-3: #5598e7;
+	--viz-heat-4: #9ec5f4;
+	--viz-series-1: #3987e5;
+	--viz-series-2: #d95926;
+	--viz-series-3: #199e70;
+	--viz-grid: rgba(255, 255, 255, 0.12);
 
 	color-scheme: dark;
 }

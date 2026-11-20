@@ -938,3 +938,42 @@ export interface TagAddRequest {
 	color: string;
 	bgColor: string;
 }
+
+export type AnalyticsPeriod =
+	| "current_month"
+	| "current_year"
+	| "last_year"
+	| "last_12_months"
+	| "all_time";
+
+export interface AnalyticsCounts {
+	movies: number;
+	episodes: number;
+	games: number;
+}
+
+export interface AnalyticsDay extends AnalyticsCounts {
+	/** YYYY-MM-DD */
+	date: string;
+}
+
+export interface AnalyticsMonth extends AnalyticsCounts {
+	/** YYYY-MM */
+	month: string;
+}
+
+export interface Analytics {
+	/** First day of the period (YYYY-MM-DD, inclusive). */
+	start: string;
+	/** Last day of the period (YYYY-MM-DD, inclusive). */
+	end: string;
+	movies: { watched: number; minutes: number };
+	shows: { finished: number; episodes: number; minutesEstimate: number };
+	games: { finished: number };
+	/** Only days with activity, ascending. */
+	days: AnalyticsDay[];
+	/** Every month of the period, ascending. */
+	months: AnalyticsMonth[];
+	/** Imported watches without a watch date (not included in anything above). */
+	undated: { movies: number; shows: number; games: number };
+}

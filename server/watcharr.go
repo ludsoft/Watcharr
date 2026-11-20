@@ -30,6 +30,7 @@ import (
 	"github.com/sbondCo/Watcharr/database/entity"
 	"github.com/sbondCo/Watcharr/domain"
 	"github.com/sbondCo/Watcharr/feature/activity"
+	"github.com/sbondCo/Watcharr/feature/analytics"
 	"github.com/sbondCo/Watcharr/feature/arr"
 	"github.com/sbondCo/Watcharr/feature/auth"
 	"github.com/sbondCo/Watcharr/feature/content"
@@ -301,6 +302,7 @@ func main() {
 	episode.NewRouter(br, watchedEpisodeService).AddRoutes()
 	activity.NewRouter(br).AddRoutes()
 	profile.NewRouter(br, profileService).AddRoutes()
+	analytics.NewRouter(br, analytics.NewService(db)).AddRoutes()
 	jellyfin.
 		NewRouter(
 			br,
