@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"strconv"
+	"time"
 
 	"github.com/sbondCo/Watcharr/activity"
 	"github.com/sbondCo/Watcharr/database/entity"
@@ -117,6 +118,7 @@ func (s *Service) SetWatchedSeason(
 					"season": ar.SeasonNumber,
 					"status": ar.Status,
 				}).
+				SetCustomDate(statusChangeDate(ar)).
 				SetReason(ar.ActivityReason).
 				AddToMultiCreator(activityMC)
 		}
@@ -196,7 +198,7 @@ func (s *Service) SetWatchedSeason(
 	resp.WatchedSeason = *wSeason
 	resp.AddedActivities = addedActivities
 
-	if ar.Status != "" {
+	if ar.Status != "" && !ar.SkipHooks {
 		slog.Debug("SetWatchedSeason: Season status was changed, calling hook.")
 		resp.StatusChangedHookResponse =
 			s.hookStatusChanged(
@@ -211,6 +213,14 @@ func (s *Service) SetWatchedSeason(
 }
 
 // Remove a watched season
+// Custom date for a status changed activity, if the request asked for one.
+func statusChangeDate(ar domain.WatchedSeasonSetRequest) *time.Time {
+	if ar.DateStatusChange && !ar.AddActivityDate.IsZero() {
+		return &ar.AddActivityDate
+	}
+	return nil
+}
+
 func (s *Service) RmWatchedSeason(userId uint, seasonId uint) (entity.Activity, error) {
 	slog.Debug("rmWatchedSeason called", "user_id", userId, "season_id", seasonId)
 	var watchedSeason entity.WatchedSeason

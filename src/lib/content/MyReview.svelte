@@ -1,5 +1,9 @@
 <script lang="ts">
-	import type { Watched, WatchedStatus } from "@/types";
+	import type {
+		FinishedAtReleaseOption,
+		Watched,
+		WatchedStatus,
+	} from "@/types";
 	import Rating from "../rating/Rating.svelte";
 	import Status from "../Status.svelte";
 	import MyThoughts from "./MyThoughts.svelte";
@@ -10,6 +14,7 @@
 		onRatingChanged: (newRating: number) => Promise<boolean>;
 		onStatusChanged: (newStatus: WatchedStatus) => Promise<boolean>;
 		onThoughtsChanged: (newThoughts: string) => Promise<boolean>;
+		finishedAtRelease?: FinishedAtReleaseOption;
 	}
 
 	let {
@@ -18,12 +23,17 @@
 		onRatingChanged,
 		onStatusChanged,
 		onThoughtsChanged,
+		finishedAtRelease = undefined,
 	}: Props = $props();
 </script>
 
 <div class="review">
 	<Rating rating={watched?.rating} onChange={onRatingChanged} />
-	<Status status={watched?.status} onChange={onStatusChanged} />
+	<Status
+		status={watched?.status}
+		onChange={onStatusChanged}
+		{finishedAtRelease}
+	/>
 	{#if watched}
 		<MyThoughts
 			{contentTitle}

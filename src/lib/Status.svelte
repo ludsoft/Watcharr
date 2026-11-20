@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Icon from "./Icon.svelte";
-	import type { WatchedStatus } from "../types";
+	import type { FinishedAtReleaseOption, WatchedStatus } from "../types";
 	import tooltip from "./actions/tooltip";
 	import { toUnderstandableStatus } from "./util/helpers";
 
@@ -8,9 +8,16 @@
 		status: WatchedStatus | undefined;
 		isForGame?: boolean;
 		onChange: (newStatus: WatchedStatus) => void;
+		/** Show the "Finished at release date" option (after Finished). */
+		finishedAtRelease?: FinishedAtReleaseOption;
 	}
 
-	let { status, isForGame = false, onChange }: Props = $props();
+	let {
+		status,
+		isForGame = false,
+		onChange,
+		finishedAtRelease = undefined,
+	}: Props = $props();
 
 	function handleStatusClick(s: WatchedStatus) {
 		if (s === status) return;
@@ -49,6 +56,24 @@
 	>
 		<Icon i="check" />
 	</button>
+	{#if finishedAtRelease}
+		<button
+			class:not-active={!!status}
+			class:disabled={!!finishedAtRelease.disabledReason}
+			aria-disabled={!!finishedAtRelease.disabledReason}
+			onclick={() => {
+				if (!finishedAtRelease.disabledReason) finishedAtRelease.onClick();
+			}}
+			use:tooltip={{
+				text: finishedAtRelease.disabledReason
+					? `Finished at release date (${finishedAtRelease.disabledReason})`
+					: "Finished at release date",
+				pos: "top",
+			}}
+		>
+			<Icon i="calendar-check" />
+		</button>
+	{/if}
 	<button
 		class={status && status !== "HOLD" ? "not-active" : ""}
 		onclick={() => handleStatusClick("HOLD")}
@@ -84,6 +109,12 @@
 			font-size: 10px;
 			padding: 5px 10px;
 			height: 58px;
+
+			/* Not usable right now, tooltip says why. */
+			&.disabled {
+				opacity: 0.35;
+				cursor: not-allowed;
+			}
 		}
 
 		/* 380px is how big the this container is usually,

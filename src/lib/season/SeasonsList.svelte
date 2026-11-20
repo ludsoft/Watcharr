@@ -17,6 +17,10 @@
 	import { watchedStatuses } from "@/lib/util/helpers";
 	import { removeWatchedSeason, updateWatchedSeason } from "./api";
 	import { onMount } from "svelte";
+	import {
+		finishSeasonAtRelease,
+		finishedAtReleaseDisabledReason,
+	} from "@/lib/watched/finishedAtRelease";
 
 	interface Props {
 		tvId: number;
@@ -207,6 +211,21 @@
 								btnTooltip="Season Status"
 								handleStatusClick={(t) =>
 									handleStatusClick(t, season.season_number)}
+								finishedAtRelease={{
+									disabledReason: finishedAtReleaseDisabledReason(
+										ws?.status,
+										season.air_date,
+									),
+									onClick: () => {
+										if (!watchedItem) return;
+										finishSeasonAtRelease(
+											watchedItem,
+											season.season_number,
+										).catch(() => {
+											// Already notified.
+										});
+									},
+								}}
 								minimal={true}
 								direction="bot"
 							/>

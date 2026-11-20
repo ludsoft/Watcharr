@@ -53,6 +53,7 @@ import (
 	"github.com/sbondCo/Watcharr/feature/user/services"
 	"github.com/sbondCo/Watcharr/feature/watched"
 	"github.com/sbondCo/Watcharr/feature/watched/episode"
+	"github.com/sbondCo/Watcharr/feature/watched/releasedate"
 	"github.com/sbondCo/Watcharr/feature/watched/season"
 	"github.com/sbondCo/Watcharr/image"
 	"github.com/sbondCo/Watcharr/logging"
@@ -300,6 +301,14 @@ func main() {
 	watched.NewRouter(br, watchedService).AddRoutes()
 	season.NewRouter(br, watchedSeasonService).AddRoutes()
 	episode.NewRouter(br, watchedEpisodeService).AddRoutes()
+	releasedate.NewRouter(br, releasedate.NewService(
+		watchedService,
+		watchedSeasonService,
+		watchedEpisodeService,
+		contentService,
+		gameService,
+		tmdbService,
+	)).AddRoutes()
 	activity.NewRouter(br).AddRoutes()
 	profile.NewRouter(br, profileService).AddRoutes()
 	analytics.NewRouter(br, analytics.NewService(db)).AddRoutes()

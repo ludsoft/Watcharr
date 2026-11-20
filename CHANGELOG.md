@@ -5,6 +5,7 @@ These changes are awaiting release:
 ## Added
 
 - Auth: OpenID Connect (OIDC) login support. Configure your provider under `OIDC` in `watcharr.json` ([docs](https://watcharr.app/docs/server_config/oidc-auth)).
+- Watched: "Finished at release date" option next to Finished (posters, content pages, seasons and episodes). Records the watch at the release date instead of today; finishing a whole show finishes each released episode at its own air date and the show at its last released episode.
 
 ## Fixed
 

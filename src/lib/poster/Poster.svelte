@@ -22,6 +22,10 @@
 	import { decode } from "blurhash";
 	import WatchedDeleteModal from "../watched/WatchedDeleteModal.svelte";
 	import { resolve } from "$app/paths";
+	import {
+		finishContentAtRelease,
+		finishedAtReleaseDisabledReason,
+	} from "@/lib/watched/finishedAtRelease";
 
 	interface Props {
 		media: Media;
@@ -202,6 +206,21 @@
 			// it to our `watched` var to get the update.
 			updateWatchedVar(w);
 		});
+	}
+
+	function handleFinishedAtRelease() {
+		if (!meta?.id) return;
+		finishContentAtRelease(meta.type, meta.id)
+			.then((w) => {
+				if (typeof onUpdated === "function") {
+					onUpdated();
+					runPosterMouseLeaveIfNeeded();
+				}
+				updateWatchedVar(w);
+			})
+			.catch(() => {
+				// Already notified.
+			});
 	}
 
 	function handleInnerKeyUp(e: KeyboardEvent) {
@@ -398,6 +417,15 @@
 						status={watched?.status}
 						{handleStatusClick}
 						{disableInteraction}
+						finishedAtRelease={meta?.id
+							? {
+									disabledReason: finishedAtReleaseDisabledReason(
+										watched?.status,
+										media.releaseDate,
+									),
+									onClick: handleFinishedAtRelease,
+								}
+							: undefined}
 					/>
 				</div>
 			{/if}

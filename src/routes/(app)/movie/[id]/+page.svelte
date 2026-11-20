@@ -1,5 +1,9 @@
 <script lang="ts">
 	import PersonPoster from "@/lib/poster/PersonPoster.svelte";
+	import {
+		finishContentAtRelease,
+		finishedAtReleaseDisabledReason,
+	} from "@/lib/watched/finishedAtRelease";
 	import Spinner from "@/lib/Spinner.svelte";
 	import HorizontalList from "@/lib/HorizontalList.svelte";
 	import { contentExistsOnJellyfin, req, updateWatched } from "@/lib/util/api";
@@ -109,6 +113,18 @@
 		} catch {
 			return false;
 		}
+	}
+
+	/** Finish at release date (shows: each episode at its air date). */
+	function finishAtRelease() {
+		if (!data.movieId || !movie) return;
+		finishContentAtRelease("movie", data.movieId)
+			.then((w) => {
+				if (movie) movie.watched = w;
+			})
+			.catch(() => {
+				// Already notified.
+			});
 	}
 </script>
 
@@ -225,6 +241,13 @@
 
 			<MyReview
 				watched={movie.watched}
+				finishedAtRelease={{
+					disabledReason: finishedAtReleaseDisabledReason(
+						movie.watched?.status,
+						movie.releaseDate,
+					),
+					onClick: finishAtRelease,
+				}}
 				contentTitle={movie.name}
 				onRatingChanged={(n) => contentChanged(undefined, n)}
 				onStatusChanged={(n) => contentChanged(n)}

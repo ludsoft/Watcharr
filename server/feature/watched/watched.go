@@ -545,6 +545,9 @@ func (s *Service) AddWatched(
 	if ar.Status == entity.FINISHED {
 		activityAddReq.SetCountAsPlay(true)
 	}
+	if ar.ActivityDate != nil {
+		activityAddReq.SetCustomDate(ar.ActivityDate)
+	}
 	act, _ := activityAddReq.Create()
 	watched.Activity = append(watched.Activity, act)
 
@@ -698,6 +701,7 @@ func (s *Service) UpdateWatched(
 		activity.
 			NewCreator(s.db, userId, id, entity.STATUS_CHANGED, countAsPlay, ar.ActivityCreatedBy).
 			SetData(string(ar.Status)).
+			SetCustomDate(ar.ActivityDate).
 			AddToMultiCreator(activityMC)
 	}
 	if ar.Thoughts != "" && ar.Thoughts != upwat.Thoughts {

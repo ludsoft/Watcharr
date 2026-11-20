@@ -1,5 +1,9 @@
 <script lang="ts">
 	import Activity from "@/lib/activity/Activity.svelte";
+	import {
+		finishContentAtRelease,
+		finishedAtReleaseDisabledReason,
+	} from "@/lib/watched/finishedAtRelease";
 	import Error from "@/lib/Error.svelte";
 	import HorizontalList from "@/lib/HorizontalList.svelte";
 	import Icon from "@/lib/Icon.svelte";
@@ -135,6 +139,18 @@
 			return false;
 		}
 	}
+
+	/** Finish at release date (shows: each episode at its air date). */
+	function finishAtRelease() {
+		if (!data.tvId || !show) return;
+		finishContentAtRelease("tv", data.tvId)
+			.then((w) => {
+				if (show) show.watched = w;
+			})
+			.catch(() => {
+				// Already notified.
+			});
+	}
 </script>
 
 <svelte:head>
@@ -253,6 +269,13 @@
 
 			<MyReview
 				watched={show.watched}
+				finishedAtRelease={{
+					disabledReason: finishedAtReleaseDisabledReason(
+						show.watched?.status,
+						show.releaseDate,
+					),
+					onClick: finishAtRelease,
+				}}
 				contentTitle={show.name}
 				onRatingChanged={(n) => contentChanged(undefined, n)}
 				onStatusChanged={(n) => contentChanged(n)}

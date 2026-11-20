@@ -178,6 +178,9 @@ type WatchedAddRequest struct {
 	// Pass a watched date and we will set the CreatedAt (and initial UpdatedAt)
 	// properties for this watched entry to this specific date.
 	WatchedDate time.Time `json:"watchedDate,omitempty"`
+	// Internal only: custom date for the added activity (eg: finished at
+	// release date). The activity is dated now when nil.
+	ActivityDate *time.Time `json:"-"`
 }
 
 type WatchedAddExtraProps struct {
@@ -207,6 +210,9 @@ type WatchedUpdateRequest struct {
 	// Set the CreatedBy value on the created activity.
 	// Internal Only.
 	ActivityCreatedBy entity.ActivityCreatedBy `json:"-"`
+	// Internal only: custom date for the status changed activity (eg:
+	// finished at release date). The activity is dated now when nil.
+	ActivityDate *time.Time `json:"-"`
 }
 
 // If the struct is valid for the Update Request.

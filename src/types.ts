@@ -12,6 +12,7 @@ export type Icon =
 	| "check"
 	| "clock"
 	| "calendar"
+	| "calendar-check"
 	| "thumb-down"
 	| "thumb-up"
 	| "play"
@@ -74,6 +75,15 @@ export enum UserType {
 	Plex = 2,
 	Proxy = 3,
 	OIDC = 4,
+}
+
+/**
+ * The "Finished at release date" option shown next to the Finished status.
+ */
+export interface FinishedAtReleaseOption {
+	/** Why the option can't be used right now (shown disabled when set). */
+	disabledReason?: string;
+	onClick: () => void;
 }
 
 export interface AuthResponse {

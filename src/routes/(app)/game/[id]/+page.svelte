@@ -1,5 +1,9 @@
 <script lang="ts">
 	import Spinner from "@/lib/Spinner.svelte";
+	import {
+		finishContentAtRelease,
+		finishedAtReleaseDisabledReason,
+	} from "@/lib/watched/finishedAtRelease";
 	import { type Media, type WatchedStatus } from "@/types";
 	import Activity from "@/lib/activity/Activity.svelte";
 	import Title from "@/lib/content/Title.svelte";
@@ -77,6 +81,18 @@
 		} catch {
 			return false;
 		}
+	}
+
+	/** Finish at release date (shows: each episode at its air date). */
+	function finishAtRelease() {
+		if (!data.gameId || !game) return;
+		finishContentAtRelease("game", data.gameId)
+			.then((w) => {
+				if (game) game.watched = w;
+			})
+			.catch(() => {
+				// Already notified.
+			});
 	}
 </script>
 
@@ -165,6 +181,13 @@
 
 			<MyReview
 				watched={game.watched}
+				finishedAtRelease={{
+					disabledReason: finishedAtReleaseDisabledReason(
+						game.watched?.status,
+						game.releaseDate,
+					),
+					onClick: finishAtRelease,
+				}}
 				contentTitle={game.name}
 				onRatingChanged={(n) => contentChanged(undefined, n)}
 				onStatusChanged={(n) => contentChanged(n)}

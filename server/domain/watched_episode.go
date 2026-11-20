@@ -17,6 +17,11 @@ type (
 		AddActivityDate   time.Time                `json:"-"`
 		AddActivityReason string                   `json:"-"`
 		ActivityCreatedBy entity.ActivityCreatedBy `json:"-"`
+		// Internal only: also use AddActivityDate for the status changed
+		// activity when updating an existing episode.
+		DateStatusChange bool `json:"-"`
+		// Internal only: don't run the status changed hook (automations).
+		SkipHooks bool `json:"-"`
 	}
 
 	WatchedEpisodeSetResponse struct {

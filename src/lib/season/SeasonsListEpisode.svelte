@@ -12,6 +12,10 @@
 	import { removeWatchedEpisode, updateWatchedEpisode } from "./api";
 	import { onMount } from "svelte";
 	import { toRelativeDate } from "../util/helpers";
+	import {
+		finishEpisodeAtRelease,
+		finishedAtReleaseDisabledReason,
+	} from "../watched/finishedAtRelease";
 
 	interface Props {
 		ep: TMDBSeasonDetailsEpisode;
@@ -176,6 +180,24 @@
 					status={we?.status}
 					btnTooltip={`Episode ${ep.episode_number} Status`}
 					handleStatusClick={(t) => handleStatusClick(t)}
+					finishedAtRelease={watchedItem
+						? {
+								disabledReason: finishedAtReleaseDisabledReason(
+									we?.status,
+									ep.air_date,
+								),
+								onClick: () => {
+									if (!watchedItem) return;
+									finishEpisodeAtRelease(
+										watchedItem,
+										ep.season_number,
+										ep.episode_number,
+									).catch(() => {
+										// Already notified.
+									});
+								},
+							}
+						: undefined}
 					minimal={true}
 					direction="bot"
 				/>
