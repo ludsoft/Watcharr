@@ -123,6 +123,22 @@ This repo is a colocated [Jujutsu](https://jj-vcs.github.io/jj/) repository (`.j
 - Keep one logical change per revision, with a descriptive message (same style as the existing history), and point the feature's bookmark at its last revision before pushing.
 - Read-only git commands (`git log`, `git show`, `git diff`) are harmless, but prefer the jj equivalents.
 
+### Merging into `dev`: fast-forward from the command line
+
+`dev` has a linear history with **the exact commits that were reviewed**, so **never merge with GitHub's PR button**: all of its methods rewrite history (merge commit, squash, or "Rebase and merge" which always creates new SHAs). Instead, fast-forward `dev` with jj; GitHub then marks the PR as merged automatically.
+
+```sh
+jj git fetch
+jj rebase -s <first revision of the branch> -d dev@origin   # only if dev moved; the branch must sit directly on dev
+jj git push --bookmark <branch>                             # the PR head must be exactly what gets merged
+jj bookmark set dev -r <branch>                             # forward move only, never rewrite dev
+jj git push --bookmark dev                                  # fast-forward push, closes the PR as merged
+```
+
+- Rebase with `-s <first revision>`, not `-b <branch>`: `-b` also picks up any older copies of commits that are already on `dev` under other SHAs.
+- Never force-push or rewrite `dev`. If `jj bookmark set dev` refuses to move backwards/sideways, the branch isn't on top of `dev`: rebase it first.
+- Only merge when the branch is up to date and the PR checks (server tests, gofmt, web lint) pass on its head commit.
+
 ## Contribution rules
 
 - Large changes (more than a few lines) should be discussed in an issue first (see `CONTRIBUTING.md`).
