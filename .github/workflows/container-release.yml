@@ -7,6 +7,8 @@
 #   - Push of a version tag         -> tags `vX.Y.Z` (and `vX.Y`, `beta`).
 #   - Manual run (Actions tab)      -> same as a branch push, for any branch.
 #
+# Server tests, gofmt and web lint must pass before the image is built.
+#
 # Multi arch support doc/guide:
 # https://docs.docker.com/build/ci/github-actions/multi-platform/
 
@@ -34,7 +36,64 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Images are only built and pushed once these checks pass.
+  test-server:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v7.0.0
+
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: "server/go.mod"
+          cache-dependency-path: "server/go.sum"
+
+      - name: go test all packages
+        run: go test ./...
+
+      - name: gofmt test
+        run: |
+          outp=$(gofmt -l .)
+          if [ -n "$outp" ]; then
+            echo "Need to fix formatting!"
+            echo "$outp"
+            exit 1
+          fi
+
+  test-web:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v7.0.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24
+          cache: "npm"
+
+      - name: Get dependencies
+        run: npm ci
+
+      # TODO: Also run `npm run check` once the existing svelte-check
+      #       errors (src/lib/Error.svelte) are fixed.
+      - name: Check for linting/formatting errors
+        run: npm run lint
+
   release-images:
+    needs: [test-server, test-web]
     runs-on: ubuntu-latest
 
     permissions:
