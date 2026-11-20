@@ -2,7 +2,7 @@
 # GitHub Container Registry: ghcr.io/ludsoft/watcharr
 #
 # Triggers:
-#   - Push to `dev`, `oidc-auth` or `analytics` -> tags `<branch>` and `sha-<short sha>`
+#   - Push to `dev`, `oidc-auth`, `analytics` or `finished-at-release` -> tags `<branch>` and `sha-<short sha>`
 #                                      (`dev` also gets `latest`).
 #   - Push of a version tag         -> tags `vX.Y.Z` (and `vX.Y`, `beta`).
 #   - Manual run (Actions tab)      -> same as a branch push, for any branch.
@@ -20,6 +20,7 @@ on:
       - dev
       - oidc-auth
       - analytics
+      - finished-at-release
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'              # stable,  ex: v1.2.3
       - 'v[0-9]+.[0-9]+.[0-9]+-beta.[0-9]+'  # beta,    ex: v1.2.3-beta.1
