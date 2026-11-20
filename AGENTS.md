@@ -60,12 +60,14 @@ cd server && make run       # backend in DEV mode (MODE=DEV go run .), listens o
 CI runs these on PRs; keep them green.
 
 **Backend** (from `server/`):
+
 ```sh
 go test ./...
 gofmt -l .        # must print nothing; fix with `gofmt -w .`
 ```
 
 **Frontend** (from repo root):
+
 ```sh
 npm run lint      # prettier --check ./src/ && eslint ./src/
 npm run check     # svelte-check type checking
@@ -100,8 +102,28 @@ Formatting: Prettier with **tabs**, double quotes, semicolons, trailing commas, 
 - Container images are built by `.github/workflows/container-release.yml`.
 - If a change affects setup, config or user-facing behavior, consider updating the docs in `doc/docs/` and `FEATURES.md`.
 
+## Version control: use jj, not git
+
+This repo is a colocated [Jujutsu](https://jj-vcs.github.io/jj/) repository (`.jj/` next to `.git/`). **Always use `jj` for revisions** (creating, describing, moving, rebasing, pushing). Do not use `git commit`, `git checkout`/`switch`, `git branch`, `git stash`, `git rebase`, `git reset` or `git push`: they bypass jj's operation log and can leave jj with a divergent view. Never edit `.jj/` by hand.
+
+- In jj the working copy is itself a revision (`@`), changes are snapshotted automatically (no staging area), and branches are called _bookmarks_.
+- Common commands:
+
+  | Task                                       | Command                                                                                         |
+  | ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+  | Status / history / diff                    | `jj st`, `jj log`, `jj diff` (`jj diff -r <rev>`)                                               |
+  | Describe the current revision              | `jj describe -m "message"`                                                                      |
+  | Finish it and start a new empty one on top | `jj commit -m "message"` (or `jj describe` + `jj new`)                                          |
+  | Start new work on top of a revision        | `jj new <rev>` (e.g. `jj new dev`)                                                              |
+  | Create / move a bookmark (branch)          | `jj bookmark create <name> -r <rev>`, `jj bookmark set <name> -r <rev>`                         |
+  | Push a bookmark to the fork                | `jj git push --bookmark <name>` (also works for new bookmarks, which get tracked automatically) |
+  | Fetch / rebase onto upstream               | `jj git fetch`, `jj rebase -d dev`                                                              |
+  | Undo the last jj operation                 | `jj undo` (see `jj op log`)                                                                     |
+
+- Keep one logical change per revision, with a descriptive message (same style as the existing history), and point the feature's bookmark at its last revision before pushing.
+- Read-only git commands (`git log`, `git show`, `git diff`) are harmless, but prefer the jj equivalents.
+
 ## Contribution rules
 
 - Large changes (more than a few lines) should be discussed in an issue first (see `CONTRIBUTING.md`).
 - AI usage must be disclosed in pull requests, and submitted code must be fully understood by the submitter.
-- The repo is colocated with Jujutsu (`.jj/`) as well as Git; don't touch `.jj/`.
