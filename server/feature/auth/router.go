@@ -17,13 +17,20 @@ type Router struct {
 	br                   *router.BaseRouter
 	service              *Service
 	trustedHeaderService *TrustedHeaderService
+	oidcService          *OIDCService
 }
 
-func NewRouter(br *router.BaseRouter, service *Service, trustedHeaderService *TrustedHeaderService) *Router {
+func NewRouter(
+	br *router.BaseRouter,
+	service *Service,
+	trustedHeaderService *TrustedHeaderService,
+	oidcService *OIDCService,
+) *Router {
 	return &Router{
 		br,
 		service,
 		trustedHeaderService,
+		oidcService,
 	}
 }
 
@@ -38,6 +45,9 @@ func (r *Router) AddRoutes() {
 	auth.POST("/plex", r.LoginPlex)
 	// Proxy Login
 	auth.POST("/proxy", r.LoginProxy)
+	// OIDC Login (start, then finish with code from provider)
+	auth.POST("/oidc/start", r.StartOIDCLogin)
+	auth.POST("/oidc/callback", r.FinishOIDCLogin)
 	// Register
 	auth.POST("/register", r.Register)
 	// Get available auth providers
@@ -125,6 +135,36 @@ func (r *Router) LoginProxy(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// Start OIDC login, returns url of provider to send user to.
+func (r *Router) StartOIDCLogin(c *gin.Context) {
+	var req OIDCStartRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, router.ErrorResponse{Error: err.Error()})
+		return
+	}
+	response, err := r.oidcService.StartOIDCLogin(c.Request.Context(), req)
+	if err != nil {
+		c.JSON(http.StatusForbidden, router.ErrorResponse{Error: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}
+
+// Finish OIDC login with code and state from provider.
+func (r *Router) FinishOIDCLogin(c *gin.Context) {
+	var req OIDCCallbackRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, router.ErrorResponse{Error: err.Error()})
+		return
+	}
+	response, err := r.oidcService.FinishOIDCLogin(c.Request.Context(), req)
+	if err != nil {
+		c.JSON(http.StatusForbidden, router.ErrorResponse{Error: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}
+
 // Register
 func (r *Router) Register(c *gin.Context) {
 	var user UserRegisterRequest
@@ -157,6 +197,10 @@ func (r *Router) GetAvailableAuthProviders(c *gin.Context) {
 	if r.trustedHeaderService.TrustedHeaderAuthIsEnabled() {
 		resp.AvailableAuthProviders = append(resp.AvailableAuthProviders, "header")
 		resp.HeaderAuthAutoLogin = r.br.Cfg.HEADER_AUTH.AutoLogin
+	}
+	if r.oidcService.OIDCIsEnabled() {
+		resp.AvailableAuthProviders = append(resp.AvailableAuthProviders, "oidc")
+		resp.OIDCButtonName = r.oidcService.ButtonName()
 	}
 	c.JSON(http.StatusOK, resp)
 }

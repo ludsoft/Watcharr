@@ -234,6 +234,7 @@ func main() {
 	plexService := plex.NewService(cfg)
 	authService := auth.NewService(db, cfg, plexService)
 	authTrustedHeaderService := auth.NewTrustedHeaderService(db, cfg, authService)
+	authOIDCService := auth.NewOIDCService(db, cfg, authService)
 	userService := user.NewService(db)
 	userServicesService := services.NewService(db)
 	userManageService := user.NewManageService(db)
@@ -293,7 +294,7 @@ func main() {
 	)
 	importTraktService := imprt.NewTraktService(importService)
 
-	auth.NewRouter(br, authService, authTrustedHeaderService).AddRoutes()
+	auth.NewRouter(br, authService, authTrustedHeaderService, authOIDCService).AddRoutes()
 	content.NewRouter(br, contentService, watchedService, tmdbService).AddRoutes()
 	watched.NewRouter(br, watchedService).AddRoutes()
 	season.NewRouter(br, watchedSeasonService).AddRoutes()

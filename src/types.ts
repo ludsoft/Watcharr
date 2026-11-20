@@ -73,6 +73,7 @@ export enum UserType {
 	Jellyfin = 1,
 	Plex = 2,
 	Proxy = 3,
+	OIDC = 4,
 }
 
 export interface AuthResponse {
@@ -338,6 +339,11 @@ export interface AvailableAuthProviders {
 	isInSetup: boolean;
 	useEmby: boolean;
 	headerAuthAutoLogin: boolean;
+	oidcButtonName?: string;
+}
+
+export interface OIDCStartResponse {
+	url: string;
 }
 
 export interface TokenClaims {
