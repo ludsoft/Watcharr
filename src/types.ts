@@ -74,7 +74,8 @@ export enum UserType {
 	Jellyfin = 1,
 	Plex = 2,
 	Proxy = 3,
-	OIDC = 4,
+	/** Fork value (counts down from 99 to avoid clashing with upstream). */
+	OIDC = 99,
 }
 
 /**

@@ -32,7 +32,8 @@ type Migration struct {
 func Now(db *gorm.DB) error {
 	slog.Info("Starting migrations.")
 
-	for _, mig := range migrations {
+	// Fork migrations (migrations_fork.go) run after upstream ones.
+	for _, mig := range append(migrations, forkMigrations...) {
 		slog.Debug("Processing migration.", "id", mig.ID)
 
 		migRecord := MigrationRecord{ID: mig.ID}

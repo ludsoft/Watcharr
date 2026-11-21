@@ -12,8 +12,11 @@ var (
 	PLEX_USER     UserType = 2
 	// Registered via trusted header auth
 	PROXY_USER UserType = 3
-	// Registered via OpenID Connect
-	OIDC_USER UserType = 4
+	// Registered via OpenID Connect.
+	// Fork value (ludsoft): fork values count down from 99 so they can't
+	// clash with values upstream adds (counting up from 0). Was 4 up to
+	// v4.4.0-ludsoft.1.0.0, migrated in migrations_fork.go.
+	OIDC_USER UserType = 99
 )
 
 // User Perms

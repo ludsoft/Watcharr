@@ -138,6 +138,11 @@ This repository is a **hard fork** of [sbondCo/Watcharr](https://github.com/sbon
 
 **Keep fork changes easy to carry:** new code in new files/packages, small hooks into shared files, one logical change per revision, and fork-only plumbing (CI, AGENTS.md, versions) in their own revisions, separate from features (features can then be proposed upstream as they are).
 
+**Stored values must never clash with upstream** (they end up in users' databases):
+
+- Fork values of numeric enums that are persisted (e.g. `entity.UserType`, `entity.ActivityCreatedBy`) **count down from 99** (`OIDC_USER = 99`, next fork value 98, ...). Upstream counts up from 0.
+- Fork data migrations go in `server/database/migrate/migrations_fork.go` (run after upstream's), with IDs `YYYYMMDDHHMM_ludsoft_NNNN`. Never add fork migrations to upstream's `migrations.go`.
+
 ### Merging a feature into `ludsoft-dev`: fast-forward, never the PR button
 
 GitHub's merge button always rewrites history (merge commit, squash, or "Rebase and merge" which creates new SHAs). Fast-forward `ludsoft-dev` with jj instead; GitHub marks the PR as merged automatically.

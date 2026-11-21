@@ -1,3 +1,11 @@
+# [Unreleased]
+
+These changes are awaiting release:
+
+## Changed
+
+- Auth: OIDC users now use user type 99 instead of 4, so they can't clash with a user type upstream may add later. Existing OIDC users are migrated automatically on startup.
+
 # [4.4.0-ludsoft.1.0.0] - 2026-11-21T10:38:53Z
 
 First release of the ludsoft fork, based on upstream `dev` after v4.4.0.
