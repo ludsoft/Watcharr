@@ -1,10 +1,12 @@
-# [Unreleased]
-
-These changes are awaiting release:
+# [4.4.0-ludsoft.1.0.1] - 2026-11-21T10:52:51Z
 
 ## Changed
 
 - Auth: OIDC users now use user type 99 instead of 4, so they can't clash with a user type upstream may add later. Existing OIDC users are migrated automatically on startup.
+
+## Etc
+
+- **Package**: `ghcr.io/ludsoft/watcharr:v4.4.0-ludsoft.1.0.1` ([GitHub CR](https://github.com/ludsoft/Watcharr/pkgs/container/watcharr))
 
 # [4.4.0-ludsoft.1.0.0] - 2026-11-21T10:38:53Z
 
@@ -1980,7 +1982,8 @@ Welcome to Watcharr :popcorn:, hope it is enjoyed and improves anyone's experien
 
 <!-- Version Changelog References (newest first) -->
 
-[Unreleased]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.0.0...HEAD
+[Unreleased]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.0.1...HEAD
+[4.4.0-ludsoft.1.0.1]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.0.0...v4.4.0-ludsoft.1.0.1
 [4.4.0-ludsoft.1.0.0]: https://github.com/ludsoft/Watcharr/compare/v4.4.0...v4.4.0-ludsoft.1.0.0
 [4.4.0]: https://github.com/sbondCo/Watcharr/compare/v4.3.0...v4.4.0
 [4.3.0]: https://github.com/sbondCo/Watcharr/compare/v4.2.2...v4.3.0
