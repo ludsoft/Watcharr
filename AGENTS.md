@@ -50,6 +50,7 @@ npm run dev                 # Vite dev server (or `make dev`; `make dev_host` to
 cd server && make run       # backend in DEV mode (MODE=DEV go run .), listens on :3080
 ```
 
+- Fork shortcut ([just](https://just.systems), see `justfile`): `just dev` runs both, with hot reload for the backend too (air, config in `server/.air.toml`). `just keycloak` / `just keycloak-down` start/stop a local Keycloak seeded with users to test OIDC auth (`dev/keycloak.kube.yaml`, setup in its header).
 - In dev, the frontend calls the API at `<host>:3080/api` (see `src/lib/util/api.ts`).
 - In prod (`MODE` unset), the Go binary serves `/api` and reverse-proxies all other routes to the built SvelteKit node server via the Unix socket `/tmp/watcharrui`.
 - Data (SQLite DB, `watcharr.json` config, logs, cached images) lives in `$WATCHARR_DATA` (defaults to `./data`, i.e. `server/data` when run from `server/`). A `.env` file is loaded if present.

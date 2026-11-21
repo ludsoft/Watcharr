@@ -1,0 +1,19 @@
+# Config for air (https://github.com/air-verse/air), used by `just dev`
+# to rebuild and restart the server when Go files change.
+# Build output goes in data/ (git ignored, and not watched).
+root = "."
+tmp_dir = "data/.air"
+
+[build]
+cmd = "go build -o ./data/.air/watcharr ."
+entrypoint = ["./data/.air/watcharr"]
+include_ext = ["go"]
+include_file = ["VERSION"]
+exclude_dir = ["data", "internal/testutil"]
+exclude_regex = ["_test\\.go$"]
+delay = 500
+send_interrupt = true
+kill_delay = "3s"
+
+[misc]
+clean_on_exit = true
