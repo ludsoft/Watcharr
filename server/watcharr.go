@@ -39,6 +39,7 @@ import (
 	"github.com/sbondCo/Watcharr/feature/follow"
 	"github.com/sbondCo/Watcharr/feature/game"
 	"github.com/sbondCo/Watcharr/feature/img"
+	"github.com/sbondCo/Watcharr/feature/oauthp"
 	"github.com/sbondCo/Watcharr/feature/imprt"
 	"github.com/sbondCo/Watcharr/feature/jellyfin"
 	"github.com/sbondCo/Watcharr/feature/job"
@@ -335,6 +336,13 @@ func main() {
 	search.NewRouter(br, searchService, watchedService).AddRoutes()
 	discover.NewRouter(br, discoverService, watchedService).AddRoutes()
 	img.NewRouter(br).AddRoutes()
+	oauthpService, err := oauthp.NewService(db, cfg, authService)
+	if err != nil {
+		slog.Error("Failed to init oauth provider (check OAUTH_CLIENTS)", "error", err)
+	} else if len(oauthpService.Clients()) > 0 {
+		oauthp.NewRouter(br, oauthpService).AddRoutes()
+		slog.Info("OAuth2/OIDC provider enabled", "clients", len(oauthpService.Clients()))
+	}
 
 	// Only add setup routes if there are no users found in db.
 	var userCount int64
