@@ -1,0 +1,162 @@
+# Local Keycloak for testing OIDC auth (dev only).
+#
+#   podman kube play dev/keycloak.kube.yaml          # start (~20s to boot)
+#   podman kube play --down dev/keycloak.kube.yaml   # stop and remove
+#
+# The realm is imported on every start and nothing is persisted, so
+# restarting gives you a clean realm.
+#
+# Admin console: http://localhost:8180/admin   (admin / admin)
+#
+# Seeded users (password = username):
+#   alice   alice@example.com
+#   bob     bob@example.com
+#   carol   carol@example.com  (first login asks to update password)
+#
+# Watcharr `watcharr.json` (server/data/watcharr.json in dev):
+#
+#   "OIDC": {
+#     "enabled": true,
+#     "issuer": "http://localhost:8180/realms/watcharr",
+#     "clientId": "watcharr",
+#     "clientSecret": "watcharr-dev-secret",
+#     "buttonName": "Keycloak"
+#   }
+#
+# A public client (no secret) is also available: clientId `watcharr-public`.
+#
+# Allowed redirect URIs: http://localhost:{5173,3080,3081}/oidc_callback
+# and the same on 127.0.0.1. Add yours in the realm below if needed.
+#
+# The issuer is pinned to http://localhost:8180, so the Watcharr server must
+# reach Keycloak at that URL (fine when running it on the host, not from
+# inside another container).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: watcharr-keycloak-realm
+data:
+  watcharr-realm.json: |
+    {
+      "realm": "watcharr",
+      "enabled": true,
+      "sslRequired": "none",
+      "registrationAllowed": false,
+      "loginWithEmailAllowed": true,
+      "clients": [
+        {
+          "clientId": "watcharr",
+          "name": "Watcharr",
+          "enabled": true,
+          "protocol": "openid-connect",
+          "publicClient": false,
+          "clientAuthenticatorType": "client-secret",
+          "secret": "watcharr-dev-secret",
+          "standardFlowEnabled": true,
+          "directAccessGrantsEnabled": false,
+          "redirectUris": [
+            "http://localhost:5173/oidc_callback",
+            "http://localhost:3080/oidc_callback",
+            "http://localhost:3081/oidc_callback",
+            "http://127.0.0.1:5173/oidc_callback",
+            "http://127.0.0.1:3080/oidc_callback",
+            "http://127.0.0.1:3081/oidc_callback"
+          ],
+          "webOrigins": ["+"],
+          "attributes": {
+            "pkce.code.challenge.method": "S256",
+            "post.logout.redirect.uris": "+"
+          }
+        },
+        {
+          "clientId": "watcharr-public",
+          "name": "Watcharr (public client)",
+          "enabled": true,
+          "protocol": "openid-connect",
+          "publicClient": true,
+          "standardFlowEnabled": true,
+          "directAccessGrantsEnabled": false,
+          "redirectUris": [
+            "http://localhost:5173/oidc_callback",
+            "http://localhost:3080/oidc_callback",
+            "http://localhost:3081/oidc_callback",
+            "http://127.0.0.1:5173/oidc_callback",
+            "http://127.0.0.1:3080/oidc_callback",
+            "http://127.0.0.1:3081/oidc_callback"
+          ],
+          "webOrigins": ["+"],
+          "attributes": {
+            "pkce.code.challenge.method": "S256",
+            "post.logout.redirect.uris": "+"
+          }
+        }
+      ],
+      "users": [
+        {
+          "username": "alice",
+          "enabled": true,
+          "email": "alice@example.com",
+          "emailVerified": true,
+          "firstName": "Alice",
+          "lastName": "Liddell",
+          "credentials": [
+            { "type": "password", "value": "alice", "temporary": false }
+          ]
+        },
+        {
+          "username": "bob",
+          "enabled": true,
+          "email": "bob@example.com",
+          "emailVerified": true,
+          "firstName": "Bob",
+          "lastName": "Builder",
+          "credentials": [
+            { "type": "password", "value": "bob", "temporary": false }
+          ]
+        },
+        {
+          "username": "carol",
+          "enabled": true,
+          "email": "carol@example.com",
+          "emailVerified": true,
+          "firstName": "Carol",
+          "lastName": "Danvers",
+          "requiredActions": ["UPDATE_PASSWORD"],
+          "credentials": [
+            { "type": "password", "value": "carol", "temporary": false }
+          ]
+        }
+      ]
+    }
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: watcharr-keycloak
+spec:
+  containers:
+    - name: keycloak
+      image: quay.io/keycloak/keycloak:26.4
+      args:
+        - start-dev
+        - --import-realm
+        - --http-port=8180
+        - --hostname=http://localhost:8180
+      env:
+        - name: KC_BOOTSTRAP_ADMIN_USERNAME
+          value: admin
+        - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+          value: admin
+        - name: KC_HEALTH_ENABLED
+          value: "true"
+      ports:
+        - containerPort: 8180
+          hostPort: 8180
+      volumeMounts:
+        - name: realm
+          mountPath: /opt/keycloak/data/import
+          readOnly: true
+  volumes:
+    - name: realm
+      configMap:
+        name: watcharr-keycloak-realm
