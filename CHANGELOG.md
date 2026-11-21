@@ -1,6 +1,6 @@
-# [Unreleased]
+# [4.4.0-ludsoft.1.0.0] - 2026-11-21T10:38:53Z
 
-These changes are awaiting release:
+First release of the ludsoft fork, based on upstream `dev` after v4.4.0.
 
 ## Added
 
@@ -11,6 +11,10 @@ These changes are awaiting release:
 ## Fixed
 
 - HorizontalList: Align items to left instead of adding space between. Ex: Fixes awkward space between when there are only 2 cast members. (thanks to [@Kiddo4993] for patching!)
+
+## Etc
+
+- **Package**: `ghcr.io/ludsoft/watcharr:v4.4.0-ludsoft.1.0.0` ([GitHub CR](https://github.com/ludsoft/Watcharr/pkgs/container/watcharr))
 
 # [4.4.0] - 2026-11-18T17:07:00Z
 
@@ -1968,7 +1972,8 @@ Welcome to Watcharr :popcorn:, hope it is enjoyed and improves anyone's experien
 
 <!-- Version Changelog References (newest first) -->
 
-[Unreleased]: https://github.com/sbondCo/Watcharr/compare/v4.4.0...HEAD
+[Unreleased]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.0.0...HEAD
+[4.4.0-ludsoft.1.0.0]: https://github.com/ludsoft/Watcharr/compare/v4.4.0...v4.4.0-ludsoft.1.0.0
 [4.4.0]: https://github.com/sbondCo/Watcharr/compare/v4.3.0...v4.4.0
 [4.3.0]: https://github.com/sbondCo/Watcharr/compare/v4.2.2...v4.3.0
 [4.2.2]: https://github.com/sbondCo/Watcharr/compare/v4.2.1...v4.2.2
