@@ -19,6 +19,7 @@ When the word `watched` is used, assume it can be `played` for games too.
   - Thoughts (for writing a review, etc)
   - Activity (detailed list of modifications made to each watched item)
   - Importing from other services
+    - Netflix viewing history, with the watch dates of movies and episodes (ludsoft fork)
 - Content detail pages
   - Basic overview
   - Watch trailer

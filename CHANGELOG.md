@@ -1,3 +1,9 @@
+# [Unreleased]
+
+## Added
+
+- Import: Netflix viewing history. Drop `NetflixViewingHistory.csv` on the Import page: movies and shows are added as finished, with each play and each watched episode on its date. Items already on your list are updated instead of skipped (a play less than a year from a Netflix date is moved to it, otherwise a new play is added).
+
 # [4.4.0-ludsoft.1.1.1] - 2026-11-21T14:48:10Z
 
 ## Fixed

@@ -226,6 +226,8 @@
 							<ActivityIcon icon="jellyfin" tooltipText="Jellyfin Webhook" />
 						{:else if a.createdBy == ActivityCreatedBy.PlexImport}
 							<ActivityIcon icon="plex" tooltipText="Plex Import" />
+						{:else if a.createdBy == ActivityCreatedBy.NetflixImport}
+							<ActivityIcon icon="calendar" tooltipText="Netflix Import" />
 						{/if}
 						{#if a.countAsPlay}
 							<ActivityIcon icon="play" tooltipText="Counts as a Play." />

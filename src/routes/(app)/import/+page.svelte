@@ -26,6 +26,7 @@
 	} from "@/types";
 	import Icon from "@/lib/Icon.svelte";
 	import { resolve } from "$app/paths";
+	import { parseNetflixCsv } from "@/lib/import/netflix";
 
 	let isLoading = $state(false);
 
@@ -678,6 +679,48 @@
 		}
 	}
 
+	// Fork (ludsoft): Netflix viewing history (NetflixViewingHistory.csv).
+	async function processNetflixFile(files?: FileList | null) {
+		try {
+			const file = files?.[0];
+			if (!file) {
+				notify({
+					type: "error",
+					text: "File not found in dropped items. Please try again or refresh.",
+					time: 6000,
+				});
+				return;
+			}
+			isLoading = true;
+			const r = parseNetflixCsv(await file.text());
+			console.log("processNetflixFile: parsed", r);
+			notify({
+				type: "success",
+				text: `Found ${r.movies} movies and ${r.shows} shows (${r.episodes} episodes)${r.skipped ? `, ${r.skipped} rows without a usable title were skipped` : ""}.`,
+				time: 10000,
+			});
+			if (r.dateOrderAmbiguous) {
+				notify({
+					type: "error",
+					text: "Couldn't tell if dates are month/day or day/month, assuming month/day.",
+					time: 10000,
+				});
+			}
+			store.importedList = {
+				data: JSON.stringify(r.items),
+				type: "netflix",
+			};
+			goto(resolve("/import/process"));
+		} catch (err) {
+			isLoading = false;
+			notify({
+				type: "error",
+				text: `Failed to read Netflix history: ${err instanceof Error ? err.message : err}`,
+			});
+			console.error("import: Failed to read Netflix file!", err);
+		}
+	}
+
 	onMount(() => {
 		if (!localStorage.getItem("token")) {
 			goto(resolve("/login"));
@@ -749,6 +792,11 @@
 					icon="todomovies"
 					text="TodoMovies"
 					filesSelected={(f) => processTodoMoviesFile(f)}
+				/>
+
+				<DropFileButton
+					text="Netflix History"
+					filesSelected={(f) => processNetflixFile(f)}
 				/>
 			{/if}
 		</div>

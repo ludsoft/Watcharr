@@ -142,6 +142,8 @@ export enum ActivityCreatedBy {
 	JellyfinImport,
 	JellyfinWebhook,
 	PlexImport,
+	// Fork (ludsoft) values count down from 99.
+	NetflixImport = 98,
 }
 
 export interface Activity extends dbModel {
@@ -629,6 +631,9 @@ export interface ImportResponse {
 	results?: Media[];
 	match?: Media;
 	watchedEntry?: Watched;
+	// Fork (ludsoft): Netflix import.
+	unmatchedEpisodes?: NetflixEpisode[];
+	netflixSplit?: boolean;
 }
 
 export interface ImportedList {
@@ -649,6 +654,27 @@ export interface ImportedList {
 	watchedEpisodes?: WatchedEpisode[];
 	watchedSeasons?: WatchedSeason[];
 	tags?: TagAddRequest[];
+	// Fork (ludsoft): Netflix import data, sent to the server.
+	netflix?: NetflixImportData;
+	// Fork (ludsoft): Netflix import, client side only.
+	netflixRows?: { title: string; date: Date }[];
+	netflixUnmatched?: number;
+}
+
+// Fork (ludsoft): Netflix import, see server/domain/import_netflix.go.
+export interface NetflixEpisode {
+	seasonLabel: string;
+	title: string;
+	date: Date;
+}
+
+export interface NetflixImportData {
+	dates?: Date[];
+	episodes?: NetflixEpisode[];
+	fallbackShow?: { name: string; episodes: NetflixEpisode[] };
+	group?: boolean;
+	rowTitles?: string[];
+	showNames?: string[];
 }
 
 export interface Filters {

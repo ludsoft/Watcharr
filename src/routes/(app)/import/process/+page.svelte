@@ -30,6 +30,7 @@
 	import papa from "papaparse";
 	import Status from "@/lib/Status.svelte";
 	import { resolve } from "$app/paths";
+	import { splitNetflixGroup } from "@/lib/import/netflix";
 
 	interface ImportedListItemMultiProblem {
 		original: ImportedList;
@@ -40,6 +41,8 @@
 	let rList: ImportedList[] = $state([]);
 	let isImporting = $state(false);
 	let importText = $state("");
+	// Delay between imported items (ms).
+	let importDelayMs = 1500;
 	let cancelled = $state(false);
 	let importTableEl: HTMLTableElement | undefined = $state();
 
@@ -411,6 +414,20 @@
 					text: "Processing failed!. Please report this issue if it persists.",
 				});
 			}
+		} else if (list?.type === "netflix") {
+			// Fork (ludsoft): items are built by src/lib/import/netflix.ts.
+			importText = "Netflix";
+			// Many items (one per movie/show), TMDB lookups are cached.
+			importDelayMs = 300;
+			try {
+				rList = JSON.parse(list.data);
+			} catch (err) {
+				console.error("Netflix import processing failed!", err);
+				notify({
+					type: "error",
+					text: "Processing failed!. Please report this issue if it persists.",
+				});
+			}
 		} else if (list?.type === "todomovies") {
 			importText = "TodoMovies";
 			try {
@@ -501,6 +518,9 @@
 			try {
 				console.log("Importing", li);
 				await doImport(li);
+				// Fork (ludsoft): a Netflix group was replaced by its movies,
+				// import them from this index.
+				if (rList[i] !== li) i--;
 			} catch (err) {
 				li.state = ImportResponseType.IMPORT_FAILED;
 				console.error("Failed to import item:", li, "reason:", err);
@@ -510,7 +530,7 @@
 					time: Infinity,
 				});
 			}
-			await sleep(1500);
+			await sleep(importDelayMs);
 		}
 		store.importedList = undefined;
 		if (
@@ -581,8 +601,22 @@
 						}
 					},
 				};
+			} else if (resp.netflixSplit) {
+				// Fork (ludsoft): the grouped Netflix rows are movies.
+				const idx = rList.indexOf(item);
+				if (idx !== -1) rList.splice(idx, 1, ...splitNetflixGroup(item));
+				rList = rList;
+				res(0);
 			} else if (resp.type === ImportResponseType.IMPORT_SUCCESS) {
 				item.state = ImportResponseType.IMPORT_SUCCESS;
+				if (resp.unmatchedEpisodes?.length) {
+					item.netflixUnmatched = resp.unmatchedEpisodes.length;
+					console.warn(
+						"Netflix import: episodes not matched for",
+						item.name,
+						resp.unmatchedEpisodes,
+					);
+				}
 				const w = resp.watchedEntry;
 				if (w) {
 					const release = w.media?.releaseDate;
@@ -701,6 +735,13 @@
 											bind:value={l.name}
 											disabled={isImporting}
 										/>
+										{#if l.netflixUnmatched}
+											<span class="netflix-unmatched">
+												{l.netflixUnmatched} episode{l.netflixUnmatched > 1
+													? "s"
+													: ""} not matched
+											</span>
+										{/if}
 									</td>
 									<td class="year">
 										<input
@@ -911,6 +952,14 @@
 		td {
 			&.name {
 				width: 100%;
+
+				.netflix-unmatched {
+					display: block;
+					padding-left: 8px;
+					font-size: 12px;
+					color: $text-color;
+					opacity: 0.7;
+				}
 			}
 
 			&.year {
