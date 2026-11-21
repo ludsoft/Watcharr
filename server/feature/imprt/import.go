@@ -66,6 +66,11 @@ func (s *Service) ImportContent(
 ) (domain.ImportResponse, error) {
 	slog.Debug("import: Processing request:", "request", ar)
 
+	// Fork (ludsoft): Netflix import has its own name matching rules.
+	if ar.Netflix != nil && ar.TmdbID == 0 {
+		return s.netflixImport(userId, &ar)
+	}
+
 	// If we have a TMDB ID given to us, we can go directly to
 	// `SuccessfulImport` and let AddWatched fail if it doesn't exist.
 	if ar.TmdbID != 0 {
@@ -114,6 +119,10 @@ func (s *Service) SuccessfulImport(
 	ar *domain.ImportRequest,
 	props domain.SuccessfulImportProps,
 ) domain.ImportResponse {
+	// Fork (ludsoft): Netflix import has its own rules, see import_netflix.go.
+	if ar.Netflix != nil && props.ContentType != util.SupportedMediaGame {
+		return s.netflixSuccessfulImport(userId, ar, props)
+	}
 	status := entity.FINISHED
 	if ar.Status != "" {
 		status = ar.Status

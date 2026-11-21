@@ -91,3 +91,10 @@ const (
 	// Plex import.
 	ActivityCreatedByPlexImport
 )
+
+// Fork (ludsoft) values count down from 99 so they never clash with values
+// upstream adds to the block above.
+const (
+	// Netflix viewing history import.
+	ActivityCreatedByNetflixImport ActivityCreatedBy = 98
+)

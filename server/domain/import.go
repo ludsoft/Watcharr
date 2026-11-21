@@ -62,6 +62,9 @@ type ImportRequest struct {
 	WatchedEpisodes  []entity.WatchedEpisode `json:"watchedEpisodes"`
 	WatchedSeason    []entity.WatchedSeason  `json:"watchedSeasons"`
 	Tags             []TagAddRequest         `json:"tags"`
+
+	// Fork (ludsoft): set by the Netflix importer, see import_netflix.go.
+	Netflix *NetflixImportData `json:"netflix"`
 }
 
 // Internal struct given to the SuccessfulImport function.
@@ -90,4 +93,10 @@ type ImportResponse struct {
 	Match   Media              `json:"match,omitzero"`
 	// On success this will be filled with the new watched entry
 	WatchedEntry entity.Watched `json:"watchedEntry,omitzero"`
+	// Fork (ludsoft): Netflix import, episodes that couldn't be matched
+	// with an episode on TMDB.
+	UnmatchedEpisodes []NetflixEpisode `json:"unmatchedEpisodes,omitempty"`
+	// Fork (ludsoft): Netflix import, the grouped rows are movies: the client
+	// should import them as separate movies.
+	NetflixSplit bool `json:"netflixSplit,omitempty"`
 }
