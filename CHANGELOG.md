@@ -1,8 +1,12 @@
-# [Unreleased]
+# [4.4.0-ludsoft.1.1.0] - 2026-11-21T11:52:30Z
 
 ## Added
 
-- Analytics: Click a day in the activity history to see the films, episodes and games watched that day, with links to their pages. The selected day is kept in the url.
+- Analytics: Click a day in the activity history to see the films, episodes and games watched that day, with links to their pages, in a side panel that stays in view while scrolling. The selected day is kept in the url.
+
+## Etc
+
+- **Package**: `ghcr.io/ludsoft/watcharr:v4.4.0-ludsoft.1.1.0` ([GitHub CR](https://github.com/ludsoft/Watcharr/pkgs/container/watcharr))
 
 # [4.4.0-ludsoft.1.0.1] - 2026-11-21T10:52:51Z
 
@@ -1988,7 +1992,8 @@ Welcome to Watcharr :popcorn:, hope it is enjoyed and improves anyone's experien
 
 <!-- Version Changelog References (newest first) -->
 
-[Unreleased]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.0.1...HEAD
+[Unreleased]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.1.0...HEAD
+[4.4.0-ludsoft.1.1.0]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.0.1...v4.4.0-ludsoft.1.1.0
 [4.4.0-ludsoft.1.0.1]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.0.0...v4.4.0-ludsoft.1.0.1
 [4.4.0-ludsoft.1.0.0]: https://github.com/ludsoft/Watcharr/compare/v4.4.0...v4.4.0-ludsoft.1.0.0
 [4.4.0]: https://github.com/sbondCo/Watcharr/compare/v4.3.0...v4.4.0
