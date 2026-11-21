@@ -1,8 +1,12 @@
-# [Unreleased]
+# [4.4.0-ludsoft.1.1.1] - 2026-11-21T14:48:10Z
 
 ## Fixed
 
 - Auth: OIDC login no longer gets stuck on "Logging you in..": the callback page crashed before sending the login code to the server.
+
+## Etc
+
+- **Package**: `ghcr.io/ludsoft/watcharr:v4.4.0-ludsoft.1.1.1` ([GitHub CR](https://github.com/ludsoft/Watcharr/pkgs/container/watcharr))
 
 # [4.4.0-ludsoft.1.1.0] - 2026-11-21T11:52:30Z
 
@@ -1998,7 +2002,8 @@ Welcome to Watcharr :popcorn:, hope it is enjoyed and improves anyone's experien
 
 <!-- Version Changelog References (newest first) -->
 
-[Unreleased]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.1.0...HEAD
+[Unreleased]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.1.1...HEAD
+[4.4.0-ludsoft.1.1.1]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.1.0...v4.4.0-ludsoft.1.1.1
 [4.4.0-ludsoft.1.1.0]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.0.1...v4.4.0-ludsoft.1.1.0
 [4.4.0-ludsoft.1.0.1]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.0.0...v4.4.0-ludsoft.1.0.1
 [4.4.0-ludsoft.1.0.0]: https://github.com/ludsoft/Watcharr/compare/v4.4.0...v4.4.0-ludsoft.1.0.0
