@@ -98,7 +98,7 @@ Formatting: Prettier with **tabs**, double quotes, semicolons, trailing commas, 
 ## Changelog, versioning and releases
 
 - User-facing changes get an entry in `CHANGELOG.md` under `# [Unreleased]`, grouped as `## Added` / `## Changed` / `## Fixed`, prefixed by the area (e.g. `Person:`, `Activity:`). Credit external contributors.
-- Version bumps are done with `make version X.Y.Z`, which updates `server/VERSION` and `package.json`/`package-lock.json` together. Don't bump versions unless asked.
+- Version bumps are done with `make version <version>`, which updates `server/VERSION` and `package.json`/`package-lock.json` together. This fork uses `<upstream>-ludsoft.<fork>` versions, see "Versions and releases" below. Don't bump versions unless asked.
 - Container images are built by `.github/workflows/container-release.yml`.
 - If a change affects setup, config or user-facing behavior, consider updating the docs in `doc/docs/` and `FEATURES.md`.
 
@@ -117,27 +117,68 @@ This repo is a colocated [Jujutsu](https://jj-vcs.github.io/jj/) repository (`.j
   | Start new work on top of a revision        | `jj new <rev>` (e.g. `jj new dev`)                                                              |
   | Create / move a bookmark (branch)          | `jj bookmark create <name> -r <rev>`, `jj bookmark set <name> -r <rev>`                         |
   | Push a bookmark to the fork                | `jj git push --bookmark <name>` (also works for new bookmarks, which get tracked automatically) |
-  | Fetch / rebase onto upstream               | `jj git fetch`, `jj rebase -d dev`                                                              |
+  | Fetch / rebase onto upstream               | `jj git fetch`, see "Syncing with upstream" below                                               |
   | Undo the last jj operation                 | `jj undo` (see `jj op log`)                                                                     |
 
 - Keep one logical change per revision, with a descriptive message (same style as the existing history), and point the feature's bookmark at its last revision before pushing.
 - Read-only git commands (`git log`, `git show`, `git diff`) are harmless, but prefer the jj equivalents.
 
-### Merging into `dev`: fast-forward from the command line
+## Fork model (ludsoft/Watcharr)
 
-`dev` has a linear history with **the exact commits that were reviewed**, so **never merge with GitHub's PR button**: all of its methods rewrite history (merge commit, squash, or "Rebase and merge" which always creates new SHAs). Instead, fast-forward `dev` with jj; GitHub then marks the PR as merged automatically.
+This repository is a **hard fork** of [sbondCo/Watcharr](https://github.com/sbondCo/Watcharr), maintained as a **patch stack on top of upstream** (like a distro's downstream patches):
+
+| Branch / remote   | Role                                                                                                     |
+| ----------------- | -------------------------------------------------------------------------------------------------------- |
+| `upstream` remote | sbondCo/Watcharr. Fetch only, never push.                                                                |
+| `dev`             | **Mirror of upstream `dev`. Never commit to it**; it only moves to `dev@upstream`.                       |
+| `ludsoft-dev`     | **Default branch**: all fork revisions, on top of upstream `dev`. Images and releases are built from it. |
+| feature bookmarks | Work in progress, on top of `ludsoft-dev`.                                                               |
+
+`trunk()` is aliased to `dev@upstream` (repo jj config), so the whole fork stack (`trunk()..ludsoft-dev`) stays mutable and can be rebased.
+
+**Keep fork changes easy to carry:** new code in new files/packages, small hooks into shared files, one logical change per revision, and fork-only plumbing (CI, AGENTS.md, versions) in their own revisions, separate from features (features can then be proposed upstream as they are).
+
+### Merging a feature into `ludsoft-dev`: fast-forward, never the PR button
+
+GitHub's merge button always rewrites history (merge commit, squash, or "Rebase and merge" which creates new SHAs). Fast-forward `ludsoft-dev` with jj instead; GitHub marks the PR as merged automatically.
 
 ```sh
 jj git fetch
-jj rebase -s <first revision of the branch> -d dev@origin   # only if dev moved; the branch must sit directly on dev
-jj git push --bookmark <branch>                             # the PR head must be exactly what gets merged
-jj bookmark set dev -r <branch>                             # forward move only, never rewrite dev
-jj git push --bookmark dev                                  # fast-forward push, closes the PR as merged
+jj rebase -s <first revision of the feature> -d ludsoft-dev   # only if ludsoft-dev moved
+jj git push --bookmark <feature>                             # PR head = exactly what gets merged
+jj bookmark set ludsoft-dev -r <feature>                     # forward move only
+jj git push --bookmark ludsoft-dev
 ```
 
-- Rebase with `-s <first revision>`, not `-b <branch>`: `-b` also picks up any older copies of commits that are already on `dev` under other SHAs.
-- Never force-push or rewrite `dev`. If `jj bookmark set dev` refuses to move backwards/sideways, the branch isn't on top of `dev`: rebase it first.
-- Only merge when the branch is up to date and the PR checks (server tests, gofmt, web lint) pass on its head commit.
+Only merge when the feature passes the checks. Outside of an upstream sync, never rewrite `ludsoft-dev`.
+
+### Syncing with upstream
+
+Do it per upstream release (or whenever upstream `dev` has something needed):
+
+```sh
+jj git fetch --remote upstream
+jj bookmark set dev -r dev@upstream --allow-backwards && jj git push --bookmark dev   # update the mirror
+jj rebase -b ludsoft-dev -d dev@upstream     # replay the fork stack on top of upstream
+jj log -r 'conflicts()'                      # resolve any conflicted revisions (jj resolve / edit)
+# run the checks, then:
+jj git push --bookmark ludsoft-dev           # this is the one allowed rewrite of ludsoft-dev
+```
+
+The version revision (see below) usually conflicts on `server/VERSION`/`package.json`: resolve it by bumping to the new upstream version (and the fork version as needed).
+
+### Versions and releases
+
+Fork versions are `<upstream version>-ludsoft.<fork version>`, both parts semver and independent, for example `4.4.0-ludsoft.1.0.0` (the upstream release the stack is based on, then the fork's own version). Prior art: LinuxServer.io (`<upstream>-ls<n>`), Debian (`<upstream>-<revision>`). Note: container tags only allow `[A-Za-z0-9_.-]` (no `/` or `+`), and strict semver tools see the suffix as a pre-release, which is fine for pinning.
+
+Release steps (one revision on top of `ludsoft-dev`):
+
+1. `make version <upstream>-ludsoft.<fork>` (updates `server/VERSION`, `package.json`, `package-lock.json`).
+2. In `CHANGELOG.md`, turn `# [Unreleased]` into `# [<version>] - <UTC date>` and update the compare links at the bottom (to `ludsoft/Watcharr`).
+3. `jj describe -m "v<version>"`, `jj tag set v<version> -r @`, move `ludsoft-dev` to it.
+4. `jj git push --bookmark ludsoft-dev`, then `jj git push --tag v<version>`: CI builds `ghcr.io/ludsoft/watcharr:v<version>` (and `latest`).
+
+Bump the fork part like semver: major for breaking changes for users (config/data), minor for features, patch for fixes. When the upstream part changes, the fork part keeps counting (it is not reset).
 
 ## Contribution rules
 

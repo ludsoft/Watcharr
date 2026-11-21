@@ -1,11 +1,14 @@
 # This workflow builds a Watcharr image and pushes it to this fork's
 # GitHub Container Registry: ghcr.io/ludsoft/watcharr
 #
+# Fork model (see AGENTS.md): `dev` mirrors upstream (sbondCo/Watcharr) and is
+# never built here; our changes live on `ludsoft-dev` (default branch).
+#
 # Triggers:
-#   - Push to `dev`, `oidc-auth`, `analytics`, `finished-at-release` or `discover-filters` -> tags `<branch>` and `sha-<short sha>`
-#                                      (`dev` also gets `latest`).
-#   - Push of a version tag         -> tags `vX.Y.Z` (and `vX.Y`, `beta`).
-#   - Manual run (Actions tab)      -> same as a branch push, for any branch.
+#   - Push to `ludsoft-dev`          -> tags `ludsoft-dev` and `sha-<short sha>`.
+#   - Push of a fork release tag     -> tags the version as is and `latest`
+#     (ex: `v4.4.0-ludsoft.1.0.0`).
+#   - Manual run (Actions tab)       -> `<branch>` and `sha-<short sha>`, any branch.
 #
 # Server tests, gofmt and web lint must pass before the image is built.
 #
@@ -17,21 +20,16 @@ name: Release Watcharr Image
 on:
   push:
     branches:
-      - dev
-      - oidc-auth
-      - analytics
-      - finished-at-release
-      - discover-filters
+      - ludsoft-dev
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'              # stable,  ex: v1.2.3
-      - 'v[0-9]+.[0-9]+.[0-9]+-beta.[0-9]+'  # beta,    ex: v1.2.3-beta.1
+      # Fork release: v<upstream semver>-ludsoft.<fork semver>
+      - 'v[0-9]+.[0-9]+.[0-9]+-ludsoft.[0-9]+.[0-9]+.[0-9]+'
   workflow_dispatch:
 
 env:
   # GHCR image names must be lowercase.
   image: ghcr.io/ludsoft/watcharr
-  is_stable: ${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') }}
-  is_prerelease: ${{ startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-') }}
+  is_release: ${{ startsWith(github.ref, 'refs/tags/v') }}
 
 # Only build the latest push of a ref.
 concurrency:
@@ -127,13 +125,13 @@ jobs:
           images: ${{ env.image }}
           flavor: |
             latest=false
+          # Release tags are used as is (`-ludsoft.` is part of our version,
+          # not a semver pre-release, so no type=semver here).
           tags: |
             type=ref,event=branch
+            type=ref,event=tag
             type=sha,prefix=sha-
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=semver,pattern={{raw}}
-            type=semver,pattern=v{{major}}.{{minor}},enable=${{ env.is_stable }}
-            type=raw,value=beta,enable=${{ env.is_prerelease == 'true' && contains(github.ref_name, '-beta') }}
+            type=raw,value=latest,enable=${{ env.is_release }}
 
       - name: Tags decided
         run: echo "${{ steps.meta.outputs.tags }}"
