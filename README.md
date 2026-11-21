@@ -1,14 +1,32 @@
-<h1 align="center">Watcharr</h1>
+<h1 align="center">Watcharr (ludsoft fork)</h1>
 <p align="center"><img src="./static/logo-col.png" alt="logo" width="250" /></p>
 
 <p align="center">
-  <a href="https://github.com/sbondCo/Watcharr/pkgs/container/watcharr"><img src="https://img.shields.io/github/v/release/sbondCo/Watcharr?label=version&style=for-the-badge" /></a>
-  <a href="https://beta.watcharr.app"><img src="https://img.shields.io/website?label=DEMO&style=for-the-badge&url=https%3A%2F%2Fbeta.watcharr.app" /></a>
-  <a href="https://watcharr.app"><img src="https://img.shields.io/website?label=DOCS&style=for-the-badge&url=https%3A%2F%2Fwatcharr.app" /></a>
-  <a href="https://github.com/sbondCo/Watcharr/issues"><img src="https://img.shields.io/github/issues-raw/sbondCo/Watcharr?label=ISSUES&style=for-the-badge" /></a>
-  <a href="/LICENSE"><img src="https://img.shields.io/github/license/sbondCo/Watcharr?style=for-the-badge" /></a>
-  <a href="https://matrix.to/#/#watcharr:matrix.org"><img src="https://img.shields.io/matrix/watcharr%3Amatrix.org?style=for-the-badge&logo=matrix" /></a>
+  <a href="https://github.com/ludsoft/Watcharr/pkgs/container/watcharr"><img src="https://img.shields.io/github/v/tag/ludsoft/Watcharr?label=version&style=for-the-badge" /></a>
+  <a href="https://github.com/sbondCo/Watcharr"><img src="https://img.shields.io/badge/upstream-sbondCo%2FWatcharr-blue?style=for-the-badge" /></a>
+  <a href="/LICENSE"><img src="https://img.shields.io/github/license/ludsoft/Watcharr?style=for-the-badge" /></a>
 </p>
+
+> [!NOTE]
+> This is a fork of **[Watcharr](https://github.com/sbondCo/Watcharr)**, made by [sbondCo](https://github.com/sbondCo) and its [contributors](https://github.com/sbondCo/Watcharr/graphs/contributors). All the credit for the app goes to them.
+>
+> - Upstream project: <https://github.com/sbondCo/Watcharr>
+> - Documentation: <https://watcharr.app>
+> - Upstream issues: <https://github.com/sbondCo/Watcharr/issues>
+> - Upstream releases: <https://github.com/sbondCo/Watcharr/releases>
+> - Matrix community: <https://matrix.to/#/#watcharr:matrix.org>
+>
+> This fork is a set of patches on top of upstream `dev` and follows its updates. Its versions are `<upstream version>-ludsoft.<fork version>` (e.g. `4.4.0-ludsoft.1.2.0`), see the [changelog](CHANGELOG.md). Please report issues with fork features [here](https://github.com/ludsoft/Watcharr/issues), not upstream.
+
+## Features added by this fork
+
+- **OpenID Connect (OIDC) login**: sign in with your identity provider (Keycloak, Authentik, ...). See [OIDC auth](doc/docs/server_config/oidc-auth.md).
+- **Personal analytics page** (from the user menu): films, shows, episodes and games watched over a period (this month, this year, last year, last 12 months, all time), with runtimes, a daily activity heatmap and monthly charts. Click a day in the heatmap to see what you watched that day.
+- **"Finished at release date"**: next to Finished, records the watch at the release date instead of today. Finishing a whole show finishes each released episode at its own air date.
+- **Discover filters**: year range filter for popular movies and shows, and a country filter for popular movies (theatrical releases in that country). Filters are kept in the url.
+- **Netflix import**: import your `NetflixViewingHistory.csv` from the Import page, with each play and watched episode on its date. See [Netflix import](doc/docs/importing/netflix.md).
+
+## About Watcharr
 
 I'm your new easily self-hosted content watched list. The place you store your watched (or watching, planned, etc) **movies** and **tv shows** (and **anime**), rate them and track their status.
 
@@ -16,19 +34,7 @@ With [some extra configuration](https://watcharr.app/docs/server_config/game-sup
 
 I am built with Go and Svelte(Kit).
 
-### Demo
-
-Feel free to abuse this demo instance (nicely). It runs on the latest `dev` build so there may be bugs, as new features are tested on here too. The demo is a worst-case scenario for speed (which is why I like it as a testing ground), if you host it yourself the app will be snappy.
-
-Demo: [https://beta.watcharr.app/](https://beta.watcharr.app/)
-
-**NOTE:** There is no demo account, just type in a random username/password (smashing hand into keyboard is supported), then click `Not a user?` at the bottom and a `Sign Up` button will appear.
-
-### Track new features
-
-Most patches are tracked through [our project board](https://github.com/orgs/sbondCo/projects/9/views/3), though I am very unorganised so expect surprise updates (or don't, if you like surprises)!
-
-You can also [view a list of all current features](FEATURES.md).
+See the [list of all current features](FEATURES.md).
 
 ### Contents
 
@@ -65,7 +71,13 @@ You can also [view a list of all current features](FEATURES.md).
 
 # Set Up
 
-[Checkout our documentation](https://watcharr.app/docs/category/installation) for an up to date guide on setup! If you hate manuals, but love docker, this [docker-compose.yml](./docker-compose.yml) file is your friend.
+Watcharr's [documentation](https://watcharr.app/docs/category/installation) has an up to date guide on setup, and applies to this fork. Just use the fork's image instead of upstream's:
+
+```yaml
+image: ghcr.io/ludsoft/watcharr:latest # or a version, e.g. v4.4.0-ludsoft.1.2.0
+```
+
+If you hate manuals, but love docker, this [docker-compose.yml](./docker-compose.yml) file (already set to the fork image) is your friend. Images are amd64 only.
 
 # Community Made Tools
 
@@ -79,11 +91,9 @@ Thanks to anyone that has made a script or tool for Watcharr. Feel free to add y
 
 # Getting Help
 
-If something isn't working for you or you are stuck, [creating an issue](https://github.com/sbondCo/Watcharr/issues/new) is the best way to get help! Every type of issue is accepted, so don't be afraid to ask anything!
+For problems with the features added by this fork, [open an issue on the fork](https://github.com/ludsoft/Watcharr/issues/new).
 
-You can also [join our space on Matrix](https://matrix.to/#/#watcharr:matrix.org) for support.
-
-I'll do my best to reply!
+For everything else, Watcharr has an [issue tracker](https://github.com/sbondCo/Watcharr/issues) and a [space on Matrix](https://matrix.to/#/#watcharr:matrix.org), but please check first that the problem also happens with upstream Watcharr.
 
 # License
 
