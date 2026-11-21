@@ -10,10 +10,15 @@
 #     (ex: `v4.4.0-ludsoft.1.0.0`).
 #   - Manual run (Actions tab)       -> `<branch>` and `sha-<short sha>`, any branch.
 #
-# Server tests, gofmt and web lint must pass before the image is built.
+# Images are amd64 only (building arm64 under QEMU emulation took ~15 min).
 #
-# Multi arch support doc/guide:
-# https://docs.docker.com/build/ci/github-actions/multi-platform/
+# Releases don't rebuild: a release tag points to a commit that was just
+# pushed to `ludsoft-dev`, so the tag run waits for that branch build and adds
+# the release tags to its `sha-<short sha>` image (seconds). If there is no
+# such image (branch build failed/cancelled, tag on another commit...), it
+# falls back to testing and building as usual.
+#
+# Server tests, gofmt and web lint must pass before an image is built.
 
 name: Release Watcharr Image
 
@@ -37,8 +42,84 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Release tags only: find an already built image of this commit.
+  find-image:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    permissions:
+      actions: read
+      packages: read
+
+    outputs:
+      source: ${{ steps.find.outputs.source }}
+
+    steps:
+      - name: Wait for the ludsoft-dev build of this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run_id=$(gh run list -R "$GITHUB_REPOSITORY" \
+            --workflow container-release.yml --branch ludsoft-dev \
+            --commit "$GITHUB_SHA" --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          if [ -z "$run_id" ]; then
+            echo "No ludsoft-dev build for $GITHUB_SHA."
+            exit 0
+          fi
+          echo "Waiting for ludsoft-dev build $run_id..."
+          gh run watch "$run_id" -R "$GITHUB_REPOSITORY" --exit-status --interval 30 \
+            || echo "The ludsoft-dev build did not succeed."
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Look for the image
+        id: find
+        run: |
+          src="${image}:sha-${GITHUB_SHA::7}"
+          if docker buildx imagetools inspect "$src" >/dev/null 2>&1; then
+            echo "Found $src, it will be re-tagged."
+            echo "source=$src" >> "$GITHUB_OUTPUT"
+          else
+            echo "No $src, building."
+          fi
+
+  # Release tags only: add the release tags to the found image.
+  retag-release:
+    needs: find-image
+    if: needs.find-image.outputs.source != ''
+    runs-on: ubuntu-latest
+
+    permissions:
+      packages: write
+
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add release tags
+        env:
+          SOURCE: ${{ needs.find-image.outputs.source }}
+        run: |
+          docker buildx imagetools create \
+            -t "${image}:${GITHUB_REF_NAME}" \
+            -t "${image}:latest" \
+            "$SOURCE"
+          echo "Tagged $SOURCE as ${image}:${GITHUB_REF_NAME} and latest."
+
   # Images are only built and pushed once these checks pass.
   test-server:
+    needs: find-image
+    # Runs when find-image was skipped (branch/manual) or found nothing.
+    if: ${{ !cancelled() && needs.find-image.outputs.source == '' }}
     runs-on: ubuntu-latest
 
     permissions:
@@ -70,6 +151,8 @@ jobs:
           fi
 
   test-web:
+    needs: find-image
+    if: ${{ !cancelled() && needs.find-image.outputs.source == '' }}
     runs-on: ubuntu-latest
 
     permissions:
@@ -94,7 +177,12 @@ jobs:
         run: npm run lint
 
   release-images:
-    needs: [test-server, test-web]
+    needs: [find-image, test-server, test-web]
+    if: >-
+      ${{ !cancelled()
+      && needs.find-image.outputs.source == ''
+      && needs.test-server.result == 'success'
+      && needs.test-web.result == 'success' }}
     runs-on: ubuntu-latest
 
     permissions:
@@ -104,9 +192,6 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v7.0.0
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4.2.0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4.2.0
@@ -141,7 +226,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

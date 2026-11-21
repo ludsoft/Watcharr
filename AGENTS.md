@@ -181,7 +181,7 @@ Release steps (one revision on top of `ludsoft-dev`):
 1. `make version <upstream>-ludsoft.<fork>` (updates `server/VERSION`, `package.json`, `package-lock.json`).
 2. In `CHANGELOG.md`, turn `# [Unreleased]` into `# [<version>] - <UTC date>` and update the compare links at the bottom (to `ludsoft/Watcharr`).
 3. `jj describe -m "v<version>"`, `jj tag set v<version> -r @`, move `ludsoft-dev` to it.
-4. `jj git push --bookmark ludsoft-dev`, then `jj git push --tag v<version>`: CI builds `ghcr.io/ludsoft/watcharr:v<version>` (and `latest`).
+4. `jj git push --bookmark ludsoft-dev`, then `jj git push --tag v<version>`: CI publishes `ghcr.io/ludsoft/watcharr:v<version>` (and `latest`). The tag run doesn't rebuild: it waits for the `ludsoft-dev` build of the same commit and re-tags its `sha-<short sha>` image (it only builds if that image is missing). Images are amd64 only.
 
 Bump the fork part like semver: major for breaking changes for users (config/data), minor for features, patch for fixes. When the upstream part changes, the fork part keeps counting (it is not reset).
 
