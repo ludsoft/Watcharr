@@ -1,8 +1,12 @@
-# [Unreleased]
+# [4.4.0-ludsoft.1.2.0] - 2026-11-21T20:50:25Z
 
 ## Added
 
 - Import: Netflix viewing history. Drop `NetflixViewingHistory.csv` on the Import page: movies and shows are added as finished, with each play and each watched episode on its date. Items already on your list are updated instead of skipped (a play less than a year from a Netflix date is moved to it, otherwise a new play is added).
+
+## Etc
+
+- **Package**: `ghcr.io/ludsoft/watcharr:v4.4.0-ludsoft.1.2.0` ([GitHub CR](https://github.com/ludsoft/Watcharr/pkgs/container/watcharr))
 
 # [4.4.0-ludsoft.1.1.1] - 2026-11-21T14:48:10Z
 
@@ -2008,7 +2012,8 @@ Welcome to Watcharr :popcorn:, hope it is enjoyed and improves anyone's experien
 
 <!-- Version Changelog References (newest first) -->
 
-[Unreleased]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.1.1...HEAD
+[Unreleased]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.2.0...HEAD
+[4.4.0-ludsoft.1.2.0]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.1.1...v4.4.0-ludsoft.1.2.0
 [4.4.0-ludsoft.1.1.1]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.1.0...v4.4.0-ludsoft.1.1.1
 [4.4.0-ludsoft.1.1.0]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.0.1...v4.4.0-ludsoft.1.1.0
 [4.4.0-ludsoft.1.0.1]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.0.0...v4.4.0-ludsoft.1.0.1
