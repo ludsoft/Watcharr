@@ -994,3 +994,24 @@ export interface Analytics {
 	/** Imported watches without a watch date (not included in anything above). */
 	undated: { movies: number; shows: number; games: number };
 }
+
+export interface AnalyticsDayEntry {
+	watchedId: number;
+	type: SupportedMedia;
+	/** TMDB id for movies/shows, IGDB id for games. */
+	id: number;
+	title: string;
+	/** Local poster path, relative to the api base url. */
+	posterPath?: string;
+	/** Number of plays (movies and games). */
+	plays?: number;
+	/** Episodes finished that day (shows). */
+	episodes?: { season: number; episode: number }[];
+}
+
+export interface AnalyticsDayDetails {
+	/** YYYY-MM-DD */
+	date: string;
+	/** Ordered by the first watch of the day. */
+	entries: AnalyticsDayEntry[];
+}

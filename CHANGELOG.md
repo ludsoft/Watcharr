@@ -1,3 +1,9 @@
+# [Unreleased]
+
+## Added
+
+- Analytics: Click a day in the activity history to see the films, episodes and games watched that day, with links to their pages. The selected day is kept in the url.
+
 # [4.4.0-ludsoft.1.0.1] - 2026-11-21T10:52:51Z
 
 ## Changed

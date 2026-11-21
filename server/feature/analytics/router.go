@@ -1,6 +1,7 @@
 package analytics
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -22,6 +23,7 @@ func (r *Router) AddRoutes() {
 
 	// Only ever returns the requesting users own analytics.
 	analytics.GET("", r.GetAnalytics)
+	analytics.GET("/day", r.GetDay)
 }
 
 func (r *Router) GetAnalytics(c *gin.Context) {
@@ -34,6 +36,25 @@ func (r *Router) GetAnalytics(c *gin.Context) {
 	resp, err := r.service.Get(userId, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, router.ErrorResponse{Error: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, resp)
+}
+
+func (r *Router) GetDay(c *gin.Context) {
+	userId := c.MustGet("userId").(uint)
+	var req DayRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		c.JSON(http.StatusBadRequest, router.ErrorResponse{Error: err.Error()})
+		return
+	}
+	resp, err := r.service.GetDay(userId, req)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if errors.Is(err, ErrInvalidDate) {
+			status = http.StatusBadRequest
+		}
+		c.JSON(status, router.ErrorResponse{Error: err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, resp)

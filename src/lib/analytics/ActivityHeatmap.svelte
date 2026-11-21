@@ -2,6 +2,7 @@
 	Activity heatmap: one cell per day, one row per year (newest first).
 	Columns are weeks (Monday first). Cell color = total watch events that day
 	of the selected media types, on 4 quartile based levels.
+	Days with activity can be clicked to see what was watched.
 -->
 <script lang="ts">
 	import type { AnalyticsCounts, AnalyticsDay } from "@/types";
@@ -17,9 +18,14 @@
 		include: Record<keyof AnalyticsCounts, boolean>;
 		/** Called when a media type filter is clicked. */
 		onToggle: (key: keyof AnalyticsCounts) => void;
+		/** Selected day (YYYY-MM-DD), highlighted. */
+		selected?: string;
+		/** Called when a day with activity is clicked. */
+		onSelect: (date: string) => void;
 	}
 
-	let { start, end, days, include, onToggle }: Props = $props();
+	let { start, end, days, include, onToggle, selected, onSelect }: Props =
+		$props();
 
 	const CELL = 12;
 	const GAP = 3;
@@ -160,18 +166,46 @@
 						{/if}
 					{/each}
 					{#each row.cells as c (c.date)}
-						<rect
-							class="cell l{c.level}"
-							class:hovered={hovered?.date === c.date}
-							x={c.x}
-							y={c.y}
-							width={CELL}
-							height={CELL}
-							rx={2}
-							role="presentation"
-							onpointerenter={() => (hovered = { ...c, year: row.year })}
-							onpointerleave={() => (hovered = undefined)}
-						/>
+						{#if c.level > 0}
+							<rect
+								class="cell active l{c.level}"
+								class:hovered={hovered?.date === c.date}
+								class:selected={selected === c.date}
+								x={c.x}
+								y={c.y}
+								width={CELL}
+								height={CELL}
+								rx={2}
+								role="button"
+								tabindex="0"
+								aria-label="{describeCounts(c.counts)} on {formatDay(c.date)}"
+								aria-pressed={selected === c.date}
+								onpointerenter={() => (hovered = { ...c, year: row.year })}
+								onpointerleave={() => (hovered = undefined)}
+								onfocus={() => (hovered = { ...c, year: row.year })}
+								onblur={() => (hovered = undefined)}
+								onclick={() => onSelect(c.date)}
+								onkeydown={(e) => {
+									if (e.key === "Enter" || e.key === " ") {
+										e.preventDefault();
+										onSelect(c.date);
+									}
+								}}
+							/>
+						{:else}
+							<rect
+								class="cell l0"
+								class:hovered={hovered?.date === c.date}
+								x={c.x}
+								y={c.y}
+								width={CELL}
+								height={CELL}
+								rx={2}
+								role="presentation"
+								onpointerenter={() => (hovered = { ...c, year: row.year })}
+								onpointerleave={() => (hovered = undefined)}
+							/>
+						{/if}
 					{/each}
 				</svg>
 				{#if hovered && hovered.year === row.year}
@@ -274,9 +308,17 @@
 		&.l4 {
 			fill: var(--viz-heat-4);
 		}
+		&.active {
+			cursor: pointer;
+			outline: none;
+		}
 		&.hovered {
 			stroke: $text-color;
 			stroke-width: 1.5px;
+		}
+		&.selected {
+			stroke: $text-color;
+			stroke-width: 2.5px;
 		}
 	}
 

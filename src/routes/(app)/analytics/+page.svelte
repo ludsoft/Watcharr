@@ -7,6 +7,7 @@
 	import Stat from "@/lib/stats/Stat.svelte";
 	import Stats from "@/lib/stats/Stats.svelte";
 	import ActivityHeatmap from "@/lib/analytics/ActivityHeatmap.svelte";
+	import DayDetails from "@/lib/analytics/DayDetails.svelte";
 	import MonthlyBars from "@/lib/analytics/MonthlyBars.svelte";
 	import { formatMinutes, formatMonth, plural } from "@/lib/analytics/util";
 	import { req } from "@/lib/util/api";
@@ -44,6 +45,12 @@
 		};
 	});
 
+	/** Day opened in the activity history (`day` url param, YYYY-MM-DD). */
+	let day: string | undefined = $derived.by(() => {
+		const d = page.url.searchParams.get("day") ?? "";
+		return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : undefined;
+	});
+
 	let data: Analytics | undefined = $state();
 	let error: unknown = $state();
 	let loading = $state(false);
@@ -79,11 +86,16 @@
 	 * filter changes don't pile up in history, but going back to this page
 	 * restores them.
 	 */
-	function navigate(p: AnalyticsPeriod, inc: Record<MediaType, boolean>) {
+	function navigate(
+		p: AnalyticsPeriod,
+		inc: Record<MediaType, boolean>,
+		d: string | undefined,
+	) {
 		const types = mediaTypes.filter((t) => inc[t]);
 		const typesParam =
 			types.length === mediaTypes.length ? "" : `&types=${types.join(",")}`;
-		goto(resolve(`/analytics?period=${p}${typesParam}`), {
+		const dayParam = d ? `&day=${d}` : "";
+		goto(resolve(`/analytics?period=${p}${typesParam}${dayParam}`), {
 			replaceState: true,
 			keepFocus: true,
 			noScroll: true,
@@ -92,7 +104,8 @@
 
 	function setPeriod(p: AnalyticsPeriod) {
 		if (p === period) return;
-		navigate(p, include);
+		// The opened day is likely not in the new period.
+		navigate(p, include, undefined);
 	}
 
 	function toggleType(t: MediaType) {
@@ -100,7 +113,11 @@
 		if (include[t] && mediaTypes.filter((m) => include[m]).length === 1) {
 			return;
 		}
-		navigate(period, { ...include, [t]: !include[t] });
+		navigate(period, { ...include, [t]: !include[t] }, day);
+	}
+
+	function selectDay(d: string | undefined) {
+		navigate(period, include, d === day ? undefined : d);
 	}
 
 	let monthly = $derived(data?.months ?? []);
@@ -200,7 +217,7 @@
 					<h3 class="norm">Activity History</h3>
 					<p class="sub">
 						Each cell is one day: films, episodes and games finished. Stronger
-						color means more activity.
+						color means more activity. Click a day to see what you watched.
 					</p>
 					<ActivityHeatmap
 						start={data.start}
@@ -208,6 +225,8 @@
 						days={data.days}
 						{include}
 						onToggle={toggleType}
+						selected={day}
+						onSelect={selectDay}
 					/>
 				</section>
 
@@ -261,6 +280,9 @@
 					</details>
 				</section>
 			</div>
+			{#if day}
+				<DayDetails date={day} {include} onClose={() => selectDay(undefined)} />
+			{/if}
 		{/if}
 	</div>
 </div>

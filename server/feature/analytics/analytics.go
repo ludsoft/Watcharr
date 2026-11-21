@@ -105,6 +105,11 @@ type event struct {
 	minutes uint32
 	// Imported without any watch date, `at` is meaningless.
 	undated bool
+	// Watched (list) item the event is for.
+	watchedID uint
+	// Only for kindEpisode.
+	season  int
+	episode int
 }
 
 type eventKind int
@@ -138,16 +143,7 @@ type episodeKey struct {
 
 // Get analytics for userId.
 func (s *Service) Get(userId uint, req Request) (Response, error) {
-	loc := time.UTC
-	if req.TZ != "" {
-		l, err := time.LoadLocation(req.TZ)
-		if err != nil {
-			slog.Warn("analytics.Get: Invalid timezone, falling back to UTC", "tz", req.TZ, "error", err)
-		} else {
-			loc = l
-		}
-	}
-
+	loc := location(req.TZ)
 	events, err := s.loadEvents(userId)
 	if err != nil {
 		return Response{}, err
@@ -155,6 +151,19 @@ func (s *Service) Get(userId uint, req Request) (Response, error) {
 
 	start, end := periodRange(req.Period, s.now().In(loc), events, loc)
 	return aggregate(events, start, end, loc), nil
+}
+
+// Load the users timezone, falling back to UTC when empty or invalid.
+func location(tz string) *time.Location {
+	if tz == "" {
+		return time.UTC
+	}
+	l, err := time.LoadLocation(tz)
+	if err != nil {
+		slog.Warn("analytics: Invalid timezone, falling back to UTC", "tz", tz, "error", err)
+		return time.UTC
+	}
+	return l
 }
 
 // Load all watch events of the user (all time). Filtering to the period
@@ -257,7 +266,10 @@ func (s *Service) loadEvents(userId uint) ([]event, error) {
 				runtime = defaultEpisodeRuntime
 			}
 			if prev, ok := episodeFirst[k]; !ok || at.Before(prev.at) {
-				episodeFirst[k] = event{at: at, kind: kindEpisode, minutes: runtime}
+				episodeFirst[k] = event{
+					at: at, kind: kindEpisode, minutes: runtime,
+					watchedID: r.WatchedID, season: d.Season, episode: d.Episode,
+				}
 			}
 			continue
 		}
@@ -274,14 +286,19 @@ func (s *Service) loadEvents(userId uint) ([]event, error) {
 				undated = true
 			}
 		}
+		e := event{at: at, undated: undated, watchedID: r.WatchedID}
 		switch {
 		case r.GameID != nil:
-			events = append(events, event{at: at, kind: kindGame, undated: undated})
+			e.kind = kindGame
 		case r.ContentType != nil && *r.ContentType == entity.MOVIE:
-			events = append(events, event{at: at, kind: kindMovie, minutes: runtime, undated: undated})
+			e.kind = kindMovie
+			e.minutes = runtime
 		case r.ContentType != nil && *r.ContentType == entity.SHOW:
-			events = append(events, event{at: at, kind: kindShow, undated: undated})
+			e.kind = kindShow
+		default:
+			continue
 		}
+		events = append(events, e)
 	}
 	for _, e := range episodeFirst {
 		events = append(events, e)
