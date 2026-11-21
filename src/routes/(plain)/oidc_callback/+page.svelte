@@ -17,9 +17,6 @@
 		const state = params.get("state");
 		const providerErr = params.get("error");
 
-		// Remove code/state from the url bar & history, they are single use.
-		replaceState(resolve("/oidc_callback"), {});
-
 		if (providerErr) {
 			console.error(
 				"oidc_callback: Provider returned error:",
@@ -43,10 +40,16 @@
 			}
 			console.log("Received token... logging in.");
 			localStorage.setItem("token", resp.token);
-			goto(resolve("/"));
+			// Replace this page in history, code/state are single use.
+			goto(resolve("/"), { replaceState: true });
 			notify({ text: "Welcome!", type: "success" });
 		} catch (err) {
 			console.error("oidc_callback: Login failed!", err);
+			// Remove the used code/state from the url bar & history.
+			// Only done after awaiting the request: on first page load, onMount
+			// runs before SvelteKit's router is initialized, and shallow routing
+			// then fails (it throws in dev, and crashes on `root.$set` in prod).
+			replaceState(resolve("/oidc_callback"), {});
 			error = ReqerError.getMsg(err, "Login failed");
 		}
 	});

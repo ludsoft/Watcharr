@@ -1,3 +1,9 @@
+# [Unreleased]
+
+## Fixed
+
+- Auth: OIDC login no longer gets stuck on "Logging you in..": the callback page crashed before sending the login code to the server.
+
 # [4.4.0-ludsoft.1.1.0] - 2026-11-21T11:52:30Z
 
 ## Added
