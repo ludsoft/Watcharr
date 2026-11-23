@@ -1,8 +1,12 @@
-# [Unreleased]
+# [4.4.0-ludsoft.1.3.0] - 2026-11-23T20:43:43Z
 
 ## Added
 
 - Discover: "Hide tracked" toggle, to only show what isn't on your list yet (whatever its status: planned, watching, finished, ...). Kept in the url, and when changing type or filter.
+
+## Etc
+
+- **Package**: `ghcr.io/ludsoft/watcharr:v4.4.0-ludsoft.1.3.0` ([GitHub CR](https://github.com/ludsoft/Watcharr/pkgs/container/watcharr))
 
 # [4.4.0-ludsoft.1.2.0] - 2026-11-21T20:50:25Z
 
@@ -2018,7 +2022,8 @@ Welcome to Watcharr :popcorn:, hope it is enjoyed and improves anyone's experien
 
 <!-- Version Changelog References (newest first) -->
 
-[Unreleased]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.2.0...HEAD
+[Unreleased]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.3.0...HEAD
+[4.4.0-ludsoft.1.3.0]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.2.0...v4.4.0-ludsoft.1.3.0
 [4.4.0-ludsoft.1.2.0]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.1.1...v4.4.0-ludsoft.1.2.0
 [4.4.0-ludsoft.1.1.1]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.1.0...v4.4.0-ludsoft.1.1.1
 [4.4.0-ludsoft.1.1.0]: https://github.com/ludsoft/Watcharr/compare/v4.4.0-ludsoft.1.0.1...v4.4.0-ludsoft.1.1.0
