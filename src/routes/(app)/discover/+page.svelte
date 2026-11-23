@@ -24,6 +24,7 @@
 	import PersonPoster from "@/lib/poster/PersonPoster.svelte";
 	import FilterDropDown from "./FilterDropDown.svelte";
 	import RegionDropDown from "@/lib/RegionDropDown.svelte";
+	import Checkbox from "@/lib/Checkbox.svelte";
 	import { resolve } from "$app/paths";
 
 	const scroll = infScroll({ callback: onScrollToBottom });
@@ -73,6 +74,12 @@
 		return countrySupported && /^[A-Z]{2}$/.test(c) ? c : undefined;
 	});
 
+	// Hide what is already on the watched list (any status). Not for people.
+	let hideTrackedSupported = $derived(discoverType !== SearchType.person);
+	let hideTracked = $derived(
+		hideTrackedSupported && page.url.searchParams.get("hideTracked") === "1",
+	);
+
 	let nextLoadParams: DiscoverRequest = $derived({
 		page: dataLoader.state.page + 1,
 		type: discoverType,
@@ -80,6 +87,7 @@
 		yearFrom,
 		yearTo,
 		country,
+		hideTracked: hideTracked || undefined,
 	});
 
 	interface DiscoverParams {
@@ -88,6 +96,7 @@
 		yearFrom?: number;
 		yearTo?: number;
 		country?: string;
+		hideTracked?: boolean;
 	}
 
 	/** Current url params (to change one of them with `navigate`). */
@@ -97,6 +106,7 @@
 		yearFrom,
 		yearTo,
 		country,
+		hideTracked,
 	});
 
 	/**
@@ -112,6 +122,7 @@
 		if (p.yearFrom) parts.push(`yearFrom=${p.yearFrom}`);
 		if (p.yearTo) parts.push(`yearTo=${p.yearTo}`);
 		if (p.country) parts.push(`country=${encodeURIComponent(p.country)}`);
+		if (p.hideTracked) parts.push("hideTracked=1");
 		goto(resolve(`/discover?${parts.join("&")}`), {
 			keepFocus: true,
 			noScroll: true,
@@ -152,8 +163,11 @@
 	function setActiveDiscoverType(to: SearchType | undefined) {
 		console.debug("setActiveDiscoverType: to:", to);
 		// Filter (and year/country) are reset when changing type, since the
-		// new type may not support them.
-		navigate({ type: !to || discoverType === to ? undefined : to });
+		// new type may not support them. Hide tracked is kept.
+		navigate({
+			type: !to || discoverType === to ? undefined : to,
+			hideTracked,
+		});
 	}
 
 	onMount(() => {
@@ -193,6 +207,19 @@
 					}}
 				/>
 			</div>
+			{#if hideTrackedSupported}
+				<div
+					class="hide-tracked"
+					title="Hide what is already on your list (planned, watching, finished, ...)"
+				>
+					<Checkbox
+						name="discover-hide-tracked"
+						value={hideTracked}
+						toggled={(on) => navigate({ ...current(), hideTracked: on })}
+					/>
+					<label for="discover-hide-tracked">Hide tracked</label>
+				</div>
+			{/if}
 			<div class="pagetitle-filterdropdown">
 				<FilterDropDown
 					{discoverType}
@@ -200,7 +227,7 @@
 					onChange={(f) => {
 						console.log("Discover FilterDropDown Selected Change", f);
 						// Year/country filters reset with the main filter.
-						navigate({ type: discoverType, filter: f });
+						navigate({ type: discoverType, filter: f, hideTracked });
 					}}
 				/>
 			</div>
@@ -251,7 +278,11 @@
 					<button
 						class="plain clear"
 						onclick={() =>
-							navigate({ type: discoverType, filter: discoverFilter })}
+							navigate({
+								type: discoverType,
+								filter: discoverFilter,
+								hideTracked,
+							})}
 					>
 						Clear filters
 					</button>
@@ -321,6 +352,26 @@
 
 	.pagetitle-filterdropdown {
 		margin-left: auto;
+	}
+
+	.hide-tracked {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		/* Some space from the type filter. */
+		margin-left: 75px;
+		font-size: 14px;
+		white-space: nowrap;
+
+		/* The type filter takes the whole width here: go right below it. */
+		@media screen and (max-width: 745px) {
+			order: 3;
+			margin-left: 0;
+		}
+
+		label {
+			cursor: pointer;
+		}
 	}
 
 	.filters {

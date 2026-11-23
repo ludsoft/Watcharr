@@ -1,3 +1,9 @@
+# [Unreleased]
+
+## Added
+
+- Discover: "Hide tracked" toggle, to only show what isn't on your list yet (whatever its status: planned, watching, finished, ...). Kept in the url, and when changing type or filter.
+
 # [4.4.0-ludsoft.1.2.0] - 2026-11-21T20:50:25Z
 
 ## Added

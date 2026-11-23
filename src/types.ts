@@ -497,6 +497,8 @@ export interface DiscoverRequest extends PaginationParams {
 	yearTo?: number;
 	/** Popular movies only: released in theatres in this country (ISO 3166-1). */
 	country?: string;
+	/** Leave out results already on the user's watched list (any status). */
+	hideTracked?: boolean;
 }
 
 export interface PersonDetailsResponse {

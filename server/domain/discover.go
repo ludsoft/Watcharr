@@ -39,6 +39,10 @@ type DiscoverRequest struct {
 	YearTo int `form:"yearTo" binding:"omitempty,min=1870,max=2200"`
 	// Released (in theatres) in this country (ISO 3166-1). Movies only.
 	Country string `form:"country" binding:"omitempty,iso3166_1_alpha2"`
+
+	// Leave out results that are already on the user's watched list
+	// (whatever their status). Supported by every type and filter.
+	HideTracked bool `form:"hideTracked"`
 }
 
 // Are any of the optional filters set?

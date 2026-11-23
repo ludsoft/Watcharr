@@ -99,5 +99,8 @@ func (r *Router) GetDiscover(c *gin.Context) {
 		)
 		return
 	}
+	if req.HideTracked {
+		ww.Results = removeTracked(ww.Results)
+	}
 	c.JSON(http.StatusOK, ww)
 }
